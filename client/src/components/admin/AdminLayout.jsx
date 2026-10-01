@@ -69,20 +69,25 @@ export default function AdminLayout() {
     let isMounted = true;
     const loadQuickStats = async () => {
       try {
-        const [inqRes, prodRes, segRes] = await Promise.all([
+        const [inqRes, prodRes, segRes, subRes, partRes] = await Promise.all([
           api.get('/inquiries').catch(() => ({ data: [] })),
           api.get('/products', { params: { admin: true, limit: 1 } }).catch(() => ({ data: { total: 0 } })),
           api.get('/segments', { params: { all: true } }).catch(() => ({ data: [] })),
+          api.get('/subscribers').catch(() => ({ data: { subscribers: [] } })),
+          api.get('/partners', { params: { all: true } }).catch(() => ({ data: [] })),
         ]);
         if (!isMounted) return;
         const inqs = inqRes.data || [];
         const newCount = inqs.filter((i) => i.status === 'new').length;
+        const subCount = subRes.data?.totalCount ?? (Array.isArray(subRes.data) ? subRes.data.length : (subRes.data?.subscribers?.length || 0));
         setCounts((prev) => ({
           ...prev,
           inquiries: inqs.length,
           newInquiries: newCount,
           products: prodRes.data?.total || 0,
           segments: (segRes.data || []).length,
+          subscribers: subCount,
+          partners: (partRes.data || []).length,
         }));
       } catch {}
     };

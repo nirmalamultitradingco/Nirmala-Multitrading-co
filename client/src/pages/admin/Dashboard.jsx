@@ -41,7 +41,7 @@ export default function Dashboard() {
           partners: part.data?.length || 0,
           inquiries: inqList.length,
           newInquiries: inqList.filter((i) => i.status === 'new').length,
-          subscribers: Array.isArray(subs.data) ? subs.data.length : 0,
+          subscribers: subs.data?.totalCount ?? (Array.isArray(subs.data) ? subs.data.length : (subs.data?.subscribers?.length || 0)),
           brochures: Array.isArray(broch.data) ? broch.data.length : 0,
         });
         setRecentInquiries(inqList.slice(0, 5));

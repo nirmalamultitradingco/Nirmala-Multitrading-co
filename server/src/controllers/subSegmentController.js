@@ -1,14 +1,19 @@
+import mongoose from 'mongoose';
 import SubSegment from '../models/SubSegment.js';
 import Segment from '../models/Segment.js';
 import Product from '../models/Product.js';
 import { asyncHandler } from '../utils/sendEmail.js';
 
-// GET /api/subsegments?segment=<segment-slug>&all=true
+// GET /api/subsegments?segment=<segment-slug-or-id>&all=true
 export const getSubSegments = asyncHandler(async (req, res) => {
   const query = req.query.all === 'true' ? {} : { isActive: true };
 
   if (req.query.segment) {
-    const segment = await Segment.findOne({ slug: req.query.segment }).select('_id');
+    const isId = mongoose.Types.ObjectId.isValid(req.query.segment);
+    const segQuery = isId
+      ? { $or: [{ _id: req.query.segment }, { slug: req.query.segment }] }
+      : { slug: req.query.segment };
+    const segment = await Segment.findOne(segQuery).select('_id');
     query.segment = segment ? segment._id : null;
   }
 
@@ -40,13 +45,19 @@ export const createSubSegment = asyncHandler(async (req, res) => {
     throw new Error('Parent segment is required.');
   }
 
-  const parent = await Segment.findById(segment);
+  const isId = mongoose.Types.ObjectId.isValid(segment);
+  const parent = await Segment.findOne(
+    isId ? { $or: [{ _id: segment }, { slug: segment }] } : { slug: segment }
+  );
   if (!parent) {
     res.status(400);
     throw new Error('Parent segment not found.');
   }
 
-  const subsegment = await SubSegment.create(req.body);
+  const subsegment = await SubSegment.create({
+    ...req.body,
+    segment: parent._id,
+  });
   await subsegment.populate('segment', 'name slug');
   res.status(201).json(subsegment);
 });
@@ -59,15 +70,20 @@ export const updateSubSegment = asyncHandler(async (req, res) => {
     throw new Error('Sub-segment not found.');
   }
 
+  const updateData = { ...req.body };
   if (req.body.segment) {
-    const parent = await Segment.findById(req.body.segment);
+    const isId = mongoose.Types.ObjectId.isValid(req.body.segment);
+    const parent = await Segment.findOne(
+      isId ? { $or: [{ _id: req.body.segment }, { slug: req.body.segment }] } : { slug: req.body.segment }
+    );
     if (!parent) {
       res.status(400);
       throw new Error('Parent segment not found.');
     }
+    updateData.segment = parent._id;
   }
 
-  Object.assign(subsegment, req.body);
+  Object.assign(subsegment, updateData);
   await subsegment.save();
   await subsegment.populate('segment', 'name slug');
   res.json(subsegment);

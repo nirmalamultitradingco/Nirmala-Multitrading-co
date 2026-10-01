@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../api/axios.js';
 import CategoryPillBar from '../components/products/CategoryPillBar.jsx';

@@ -32,12 +32,13 @@ const run = async () => {
 
   // ---- Admin user ----
   await User.create({
-    name: process.env.ADMIN_NAME || 'Site Admin',
-    email: process.env.ADMIN_EMAIL || 'admin@harvestbridge.com',
+    name: process.env.ADMIN_NAME || 'NMC Admin',
+    email: process.env.ADMIN_EMAIL || 'admin@nmc.com',
     password: process.env.ADMIN_PASSWORD || 'admin12345',
+    phone: process.env.ADMIN_PHONE || '+91 7069826082',
     role: 'admin',
   });
-  console.log(`Admin created: ${process.env.ADMIN_EMAIL || 'admin@harvestbridge.com'}`);
+  console.log(`Admin created: ${process.env.ADMIN_EMAIL || 'admin@nmc.com'}`);
 
   // ---- Segments ----
   const segments = await Segment.create([

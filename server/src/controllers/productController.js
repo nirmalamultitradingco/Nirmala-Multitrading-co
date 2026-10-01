@@ -131,7 +131,11 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
 
 // POST /api/products (admin)
 export const createProduct = asyncHandler(async (req, res) => {
-  const product = await Product.create(req.body);
+  const productData = { ...req.body };
+  if (!productData.subSegment) delete productData.subSegment;
+  if (!productData.partner) delete productData.partner;
+
+  const product = await Product.create(productData);
   await product.populate([
     { path: 'segment', select: 'name slug' },
     { path: 'subSegment', select: 'name slug' },
@@ -157,7 +161,11 @@ export const updateProduct = asyncHandler(async (req, res) => {
     throw new Error('Product not found.');
   }
 
-  Object.assign(product, req.body);
+  const updateData = { ...req.body };
+  if (!updateData.subSegment) updateData.subSegment = null;
+  if (!updateData.partner) updateData.partner = null;
+
+  Object.assign(product, updateData);
   await product.save();
   await product.populate([
     { path: 'segment', select: 'name slug' },

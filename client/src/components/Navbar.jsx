@@ -196,7 +196,7 @@ export default function Navbar() {
               </Link>
 
               {/* Language picker in mobile drawer */}
-              <label className="flex items-center justify-between rounded-xl border border-line bg-white dark:bg-[#132019] px-3.5 py-2.5 text-xs font-semibold text-ink">
+              <label className="flex items-center justify-between rounded-xl border border-line bg-white dark:bg-[#132019] px-3.5 py-2.5 text-xs font-semibold text-ink dark:text-paper">
                 <span>{t('language')}</span>
                 <select
                   value={language}

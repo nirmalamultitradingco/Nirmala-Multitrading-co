@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import api from '../api/axios.js';
 import { BRAND } from '../config.js';
 import SectionHeading from '../components/SectionHeading.jsx';
@@ -10,6 +10,7 @@ const empty = { name: '', email: '', phone: '', company: '', country: '', messag
 
 export default function Inquiry() {
   const [params] = useSearchParams();
+  const { productSlug } = useParams();
   const fromAboutConversation = params.get('source') === 'aboutConversation';
   const countryParam = params.get('country') || '';
   const routeParam = params.get('route') || '';
@@ -68,9 +69,9 @@ export default function Inquiry() {
 
         if (contentRes.data?.inquiryHero) setHero(contentRes.data.inquiryHero);
 
-        // Pre-select if URL params provided
+        // Pre-select if URL params or route param provided
         const segParam = params.get('segment');
-        const prodParam = params.get('product');
+        const prodParam = params.get('product') || productSlug;
 
         if (segParam && segParam !== 'all') {
           const match = segs.find((s) => s._id === segParam || s.slug === segParam);
@@ -81,7 +82,7 @@ export default function Inquiry() {
         }
       })
       .catch((err) => console.error('Inquiry page content error:', err));
-  }, [params]);
+  }, [params, productSlug]);
 
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
