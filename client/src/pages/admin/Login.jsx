@@ -12,14 +12,14 @@ export default function Login() {
   const [mode, setMode] = useState('login');
 
   // Login form state
-  const [form, setForm] = useState({ email: 'admin@nmc.com', password: '' });
+  const [form, setForm] = useState({ email: 'mydesk@nmc.com', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const emailInputRef = useRef(null);
 
   // Forgot password & OTP state
-  const [forgotEmail, setForgotEmail] = useState('admin@nmc.com');
+  const [forgotEmail, setForgotEmail] = useState('mydesk@nmc.com');
   const [registeredPhone, setRegisteredPhone] = useState('+91 7069826082');
   const [otpStep, setOtpStep] = useState(1); // 1 = request OTP, 2 = verify & set new password
   const [otpCode, setOtpCode] = useState('');
