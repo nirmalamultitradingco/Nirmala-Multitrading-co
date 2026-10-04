@@ -114,14 +114,23 @@ export function createAlignedFavicon(imgOrSrc, options = {}) {
       try {
         const dataUrl = canvas.toDataURL('image/png');
         resolve(dataUrl);
-      } catch (err) {
-        console.warn('Canvas export warning:', err);
+      } catch (_) {
         resolve(typeof imgOrSrc === 'string' ? imgOrSrc : '');
       }
     };
 
-    img.onerror = (err) => {
-      console.warn('Failed to load image for alignment:', err);
+    let retriedWithoutCors = false;
+    img.onerror = () => {
+      if (!retriedWithoutCors && img.crossOrigin) {
+        retriedWithoutCors = true;
+        try {
+          img.removeAttribute('crossorigin');
+        } catch (_) {}
+        img.crossOrigin = null;
+        img.src = typeof imgOrSrc === 'string' ? imgOrSrc : (imgOrSrc?.src || '');
+        return;
+      }
+      // Gracefully resolve with original source without alarming console warnings
       resolve(typeof imgOrSrc === 'string' ? imgOrSrc : '');
     };
 

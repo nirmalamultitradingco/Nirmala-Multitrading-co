@@ -221,6 +221,7 @@ export function SiteContentProvider({ children }) {
       (rawFavicon.startsWith('/') || rawFavicon.startsWith('http') || rawFavicon.startsWith('data:'))
     ) {
       const fullUrl = asset(rawFavicon);
+      applyFaviconHref(fullUrl);
       createAlignedFavicon(fullUrl, {
         fit: headerData.faviconFit || 'contain',
         shape: headerData.faviconShape || 'rounded',
@@ -230,8 +231,8 @@ export function SiteContentProvider({ children }) {
         offsetX: headerData.faviconOffsetX ?? 0,
         offsetY: headerData.faviconOffsetY ?? 0,
       }).then((alignedUri) => {
-        if (!isCancelled) {
-          applyFaviconHref(alignedUri || fullUrl);
+        if (!isCancelled && alignedUri && alignedUri !== fullUrl) {
+          applyFaviconHref(alignedUri);
         }
       });
     }

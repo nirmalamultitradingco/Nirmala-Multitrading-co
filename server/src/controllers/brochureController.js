@@ -35,9 +35,10 @@ export const createBrochure = asyncHandler(async (req, res) => {
   // 2. Also optionally save locally if writable
   try {
     const localDir = path.join(__dirname, '../../uploads');
-    if (fs.existsSync(localDir)) {
-      fs.writeFileSync(path.join(localDir, filename), req.file.buffer);
+    if (!fs.existsSync(localDir)) {
+      fs.mkdirSync(localDir, { recursive: true });
     }
+    fs.writeFileSync(path.join(localDir, filename), req.file.buffer);
   } catch (_) {
     // Read-only serverless environment safely ignores disk write
   }

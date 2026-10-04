@@ -86,6 +86,15 @@ app.get('/uploads/:filename', async (req, res, next) => {
     await connectDB();
     const media = await Media.findOne({ filename });
     if (media && media.data) {
+      // Cache to local disk folder for fast subsequent serving
+      try {
+        const localDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(localDir)) {
+          fs.mkdirSync(localDir, { recursive: true });
+        }
+        fs.writeFileSync(localPath, media.data);
+      } catch (_) {}
+
       res.set('Content-Type', media.contentType || 'application/octet-stream');
       res.set('Cache-Control', 'public, max-age=31536000, immutable');
       return res.send(media.data);

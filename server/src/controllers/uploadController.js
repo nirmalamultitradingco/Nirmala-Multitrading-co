@@ -25,14 +25,18 @@ export const uploadImage = asyncHandler(async (req, res) => {
     size: req.file.size,
   });
 
-  // 2. Also mirror to local disk folder if writable (in local development)
+  // 2. Also mirror to local disk folder for fast local development serving
   try {
     const localDir = path.join(__dirname, '../../uploads');
-    if (fs.existsSync(localDir)) {
-      fs.writeFileSync(path.join(localDir, filename), req.file.buffer);
+    if (!fs.existsSync(localDir)) {
+      fs.mkdirSync(localDir, { recursive: true });
     }
-  } catch (_) {
-    // Read-only serverless environment (Vercel) safely ignores disk write
+    fs.writeFileSync(path.join(localDir, filename), req.file.buffer);
+  } catch (err) {
+    // Read-only serverless environment (Vercel) safely ignores disk write, log for debugging
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Local disk mirror skipped:', err.message);
+    }
   }
 
   res.status(201).json({ url: `/uploads/${filename}` });

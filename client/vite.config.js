@@ -7,8 +7,14 @@ export default defineConfig({
     port: 5173,
     proxy: {
       // Proxy API + uploads to the Express server during development.
-      '/api': 'http://localhost:5000',
-      '/uploads': 'http://localhost:5000',
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
     },
   },
   build: {
