@@ -39,5 +39,5 @@ export const uploadImage = asyncHandler(async (req, res) => {
     }
   }
 
-  res.status(201).json({ url: `/uploads/${filename}` });
+  res.status(201).json({ url: `/api/uploads/${filename}` });
 });

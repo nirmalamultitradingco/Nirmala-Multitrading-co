@@ -47,7 +47,7 @@ export const createBrochure = asyncHandler(async (req, res) => {
     title: req.body.title,
     description: req.body.description || '',
     segment: req.body.segment || undefined,
-    file: `/uploads/${filename}`,
+    file: `/api/uploads/${filename}`,
   });
 
   res.status(201).json(brochure);

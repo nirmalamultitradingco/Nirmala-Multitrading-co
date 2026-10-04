@@ -52,9 +52,15 @@ export const asset = (src) => {
     return src;
   }
 
-  const cleanSrc = src.startsWith('/') ? src : `/${src}`;
-  const envUrl = import.meta.env.VITE_API_URL;
+  let cleanSrc = src.startsWith('/') ? src : `/${src}`;
 
+  // Normalize '/uploads/' paths to '/api/uploads/' so Nginx reverse proxies
+  // (which forward /api to Express) will reliably stream images from MongoDB/disk
+  if (cleanSrc.startsWith('/uploads/')) {
+    cleanSrc = `/api${cleanSrc}`;
+  }
+
+  const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
     const baseHost = envUrl.trim().replace(/\/api\/?$/, '').replace(/\/+$/, '');
     return `${baseHost}${cleanSrc}`;

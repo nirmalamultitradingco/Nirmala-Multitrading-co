@@ -66,18 +66,21 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-/* Uploaded files - support local directory and MongoDB Atlas Media streaming */
-app.use(
-  '/uploads',
-  express.static(path.join(__dirname, 'uploads'))
-);
+/* Uploaded files - support local directory and MongoDB Atlas Media streaming on both /uploads and /api/uploads */
+const uploadsDir = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(uploadsDir));
+app.use('/api/uploads', express.static(uploadsDir));
 
-app.get('/uploads/:filename', async (req, res, next) => {
+const serveUploadedMedia = async (req, res, next) => {
   try {
     const filename = req.params.filename;
 
+    // Enable cross-origin resource sharing so browser canvas and admin previews can load media
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+
     // 1. Check local disk first (if present)
-    const localPath = path.join(__dirname, 'uploads', filename);
+    const localPath = path.join(uploadsDir, filename);
     if (fs.existsSync(localPath)) {
       return res.sendFile(localPath);
     }
@@ -88,9 +91,8 @@ app.get('/uploads/:filename', async (req, res, next) => {
     if (media && media.data) {
       // Cache to local disk folder for fast subsequent serving
       try {
-        const localDir = path.join(__dirname, 'uploads');
-        if (!fs.existsSync(localDir)) {
-          fs.mkdirSync(localDir, { recursive: true });
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
         }
         fs.writeFileSync(localPath, media.data);
       } catch (_) {}
@@ -100,11 +102,15 @@ app.get('/uploads/:filename', async (req, res, next) => {
       return res.send(media.data);
     }
 
-    return res.status(404).send('File not found');
+    return res.status(404).json({ message: 'File not found' });
   } catch (err) {
     next(err);
   }
-});
+};
+
+app.get('/uploads/:filename', serveUploadedMedia);
+app.get('/api/uploads/:filename', serveUploadedMedia);
+
 
 /* Root & Health checks (available without requiring database connection) */
 app.get('/', (req, res) => {
