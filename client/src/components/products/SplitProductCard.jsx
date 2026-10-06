@@ -62,6 +62,11 @@ export function SplitProductCard({ product }) {
               loading="lazy"
               className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
               onError={(e) => {
+                if (e.target.dataset.triedApi !== 'true' && e.target.src.includes('/uploads/')) {
+                  e.target.dataset.triedApi = 'true';
+                  e.target.src = e.target.src.replace('/uploads/', '/api/uploads/');
+                  return;
+                }
                 e.target.onerror = null;
                 e.target.src = '/NMC logo.png';
                 e.target.className = 'h-full w-full object-contain p-2';

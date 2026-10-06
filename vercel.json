@@ -14,7 +14,11 @@
       "destination": "/api/index.js"
     },
     {
-      "source": "/((?!api|uploads).*)",
+      "source": "/media/:path*",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/((?!api|uploads|media).*)",
       "destination": "/index.html"
     }
   ]
