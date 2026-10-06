@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api, { asset } from '../../api/axios.js';
 import Modal from '../../components/admin/Modal.jsx';
 import ImageUpload from '../../components/admin/ImageUpload.jsx';
@@ -34,6 +35,7 @@ export default function ManagePartners() {
   const [bannerError, setBannerError] = useState('');
   const [regSearch, setRegSearch] = useState('');
   const [regStatusFilter, setRegStatusFilter] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const loadPartners = () =>
     api.get('/partners', { params: { all: true } }).then((r) => setItems(r.data));
@@ -45,6 +47,17 @@ export default function ManagePartners() {
     loadPartners();
     loadRegistrations();
   }, []);
+
+  // Handle ?action=new from Command Palette or Quick Add
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      setActiveTab('partners');
+      openNew();
+      const next = new URLSearchParams(searchParams);
+      next.delete('action');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams]);
 
   const openNew = () => {
     setEditing(null);

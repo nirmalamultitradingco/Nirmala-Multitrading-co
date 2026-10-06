@@ -92,10 +92,11 @@ export default function ManageProducts() {
       .catch(() => {});
   }, []);
 
-  // Handle URL shortcut ?action=new or ?segment=XYZ
+  // Handle URL shortcut ?action=new, ?segment=XYZ, or ?edit=ID
   useEffect(() => {
     const action = searchParams.get('action');
     const segParam = searchParams.get('segment');
+    const editParam = searchParams.get('edit');
 
     if (segParam) {
       setFilterSegment(segParam);
@@ -103,10 +104,21 @@ export default function ManageProducts() {
 
     if (action === 'new') {
       openNew();
-      searchParams.delete('action');
-      setSearchParams(searchParams, { replace: true });
+      const next = new URLSearchParams(searchParams);
+      next.delete('action');
+      setSearchParams(next, { replace: true });
     }
-  }, [searchParams]);
+
+    if (editParam && items.length > 0) {
+      const target = items.find((p) => p._id === editParam || p.slug === editParam);
+      if (target) {
+        openEdit(target);
+        const next = new URLSearchParams(searchParams);
+        next.delete('edit');
+        setSearchParams(next, { replace: true });
+      }
+    }
+  }, [searchParams, items]);
 
   // Update form subsegments when form.segment changes
   useEffect(() => {

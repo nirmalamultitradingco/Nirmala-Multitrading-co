@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import api, { asset } from '../../api/axios.js';
 
 // Uploads a video file or accepts an MP4/WebM URL and returns it via onChange
 export default function VideoUpload({ value, onChange, label = 'Commercial Video / Ad URL' }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
 
   const upload = async (e) => {
     const file = e.target.files?.[0];
@@ -22,12 +23,34 @@ export default function VideoUpload({ value, onChange, label = 'Commercial Video
       setError(err.response?.data?.message || err.message);
     } finally {
       setBusy(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleClear = () => {
+    setError('');
+    onChange('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   return (
     <div>
-      <label className="label">{label}</label>
+      <div className="flex items-center justify-between">
+        <label className="label">{label}</label>
+        {value && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="text-xs text-clay hover:underline pb-1 cursor-pointer"
+          >
+            Remove Video
+          </button>
+        )}
+      </div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         {value ? (
           <div className="relative h-16 w-24 overflow-hidden rounded-lg border border-line bg-black flex-shrink-0">
@@ -43,9 +66,11 @@ export default function VideoUpload({ value, onChange, label = 'Commercial Video
         )}
         <div className="flex-1 w-full">
           <input
+            ref={fileInputRef}
             type="file"
             accept="video/mp4,video/webm,video/quicktime,video/m4v"
             onChange={upload}
+            disabled={busy}
             className="text-sm block w-full text-ink/70 file:mr-3 file:rounded-md file:border-0 file:bg-forest/10 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-forest hover:file:bg-forest/20"
           />
           <input
@@ -56,7 +81,7 @@ export default function VideoUpload({ value, onChange, label = 'Commercial Video
           />
         </div>
       </div>
-      {busy && <p className="mt-1 text-xs text-moss animate-pulse">Uploading video (up to 100MB)…</p>}
+      {busy && <p className="mt-1 text-xs text-moss animate-pulse">Uploading video to server (up to 100MB)…</p>}
       {error && <p className="mt-1 text-xs text-clay">{error}</p>}
     </div>
   );

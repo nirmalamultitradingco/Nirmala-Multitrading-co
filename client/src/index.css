@@ -1531,6 +1531,63 @@ body { overflow-x: hidden; scrollbar-width: none; }
   .home-how-card { opacity: 1; transform: none; transition: none; }
 }
 
+/* =========================================================
+   UNIVERSAL MEDIA ALIGNMENT & FUTURE-PROOF CONTENT NORMALIZATION
+   ========================================================= */
+/* Protect all uploaded photos & videos from distortion or overflow */
+img, video {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+/* Aspect-ratio locked media containers with smooth object-fit */
+.media-frame-cover {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.media-frame-contain {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Responsive typography & container alignment */
+.container-x {
+  width: 100%;
+  max-width: 80rem; /* 1280px */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-x {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-x {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Prevent unwanted mobile touch issues and ensure comfortable touch target */
+button, a.btn-primary, a.btn-gold, a.btn-outline {
+  min-height: 40px;
+  touch-action: manipulation;
+}
 
 /* Admin usability & Strict Translation Isolation */
 .admin-panel {

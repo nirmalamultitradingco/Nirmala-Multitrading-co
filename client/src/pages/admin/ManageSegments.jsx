@@ -1,10 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import api from '../../api/axios.js';
+import api, { asset } from '../../api/axios.js';
 import Modal from '../../components/admin/Modal.jsx';
 import ImageUpload from '../../components/admin/ImageUpload.jsx';
+import VideoUpload from '../../components/admin/VideoUpload.jsx';
 
-const blank = { name: '', description: '', image: '', order: 0, isActive: true };
+const blank = { name: '', description: '', image: '', video: '', order: 0, isActive: true };
 
 export default function ManageSegments() {
   const [items, setItems] = useState([]);
@@ -236,7 +237,7 @@ export default function ManageSegments() {
               <div className="flex items-center gap-4 min-w-0">
                 <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-line/30">
                   {s.image ? (
-                    <img src={s.image} alt="" className="h-full w-full object-cover" />
+                    <img src={asset(s.image)} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-ink/30 text-xs font-mono">NMC</span>
                   )}
@@ -256,6 +257,11 @@ export default function ManageSegments() {
                     {subCount > 0 && (
                       <span className="rounded-full bg-paper border border-line px-2.5 py-0.5 text-[10px] font-mono text-ink/65">
                         {subCount} {subCount === 1 ? 'Sub-Category' : 'Sub-Categories'}
+                      </span>
+                    )}
+                    {s.video && (
+                      <span className="rounded-full bg-emerald-50 border border-emerald-300 px-2 py-0.5 text-[10px] font-mono text-emerald-800 font-bold" title="Has Showcase Video">
+                        🎬 Video
                       </span>
                     )}
                   </div>
@@ -385,6 +391,12 @@ export default function ManageSegments() {
             label="Category Image (Header / Banner)"
             value={form.image}
             onChange={(url) => setForm({ ...form, image: url })}
+          />
+
+          <VideoUpload
+            label="Category Video (MP4 / WebM / Showcase Video)"
+            value={form.video || ''}
+            onChange={(url) => setForm({ ...form, video: url })}
           />
 
           <div className="flex items-center gap-4 pt-2">

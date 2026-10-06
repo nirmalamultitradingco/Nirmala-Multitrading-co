@@ -135,6 +135,36 @@ export default function Home() {
       {/* 1. HERO BANNER */}
       <HeroSlider heroContent={data.homeHero} />
 
+      {/* EXPORT CREDENTIALS & PORT PROXIMITY TRUST RIBBON */}
+      <div className="border-y border-line/70 bg-[#fbf9f4] dark:bg-[#101b15] py-3 sm:py-3.5 transition-colors">
+        <div className="container-x flex items-center justify-between gap-4 overflow-x-auto scrollbar-none text-xs font-mono">
+          <div className="flex items-center gap-2 shrink-0 text-ink/80 dark:text-paper/80 font-bold">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>APEDA Reg. Merchant Exporter</span>
+          </div>
+          <span className="text-ink/20 dark:text-paper/20 hidden sm:inline">•</span>
+          <div className="flex items-center gap-1.5 shrink-0 text-ink/80 dark:text-paper/80 font-bold">
+            <span>🌿</span>
+            <span>Spices Board of India</span>
+          </div>
+          <span className="text-ink/20 dark:text-paper/20 hidden md:inline">•</span>
+          <div className="flex items-center gap-1.5 shrink-0 text-ink/80 dark:text-paper/80 font-bold">
+            <span>📜</span>
+            <span>FSSAI Central Food Safety</span>
+          </div>
+          <span className="text-ink/20 dark:text-paper/20 hidden lg:inline">•</span>
+          <div className="flex items-center gap-1.5 shrink-0 text-ink/80 dark:text-paper/80 font-bold">
+            <span>⚓</span>
+            <span>Port Direct: Mundra &amp; JNPT</span>
+          </div>
+          <span className="text-ink/20 dark:text-paper/20 hidden sm:inline">•</span>
+          <div className="flex items-center gap-1.5 shrink-0 text-gold font-bold">
+            <span>🌍</span>
+            <span>40+ Global Destination Ports</span>
+          </div>
+        </div>
+      </div>
+
       {/* API CONTENT */}
       {loading ? (
         <Loader />

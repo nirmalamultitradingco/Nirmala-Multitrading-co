@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api, { asset } from '../../api/axios.js';
 import Modal from '../../components/admin/Modal.jsx';
 import ImageUpload from '../../components/admin/ImageUpload.jsx';
+import VideoUpload from '../../components/admin/VideoUpload.jsx';
 
 const blank = {
   title: '',
   excerpt: '',
   content: '',
   image: '',
+  video: '',
   images: [],
   sections: [],
   publishedAt: new Date().toISOString().slice(0, 10),
@@ -29,6 +32,7 @@ export default function ManageNews() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [bannerSuccess, setBannerSuccess] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Blog broadcast modal state
   const [broadcastItem, setBroadcastItem] = useState(null);
@@ -49,6 +53,16 @@ export default function ManageNews() {
     load();
   }, []);
 
+  // Handle ?action=new from Command Palette or Quick Add
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      openNew();
+      const next = new URLSearchParams(searchParams);
+      next.delete('action');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams]);
+
   const openNew = () => {
     setEditing(null);
     setForm(blank);
@@ -61,6 +75,7 @@ export default function ManageNews() {
     setForm({
       ...blank,
       ...item,
+      video: item.video || '',
       images: Array.isArray(item.images) ? item.images : [],
       sections: Array.isArray(item.sections) ? item.sections : [],
       publishedAt: dateValue(item.publishedAt),
@@ -293,6 +308,11 @@ export default function ManageNews() {
                 <span className="tag">{dateValue(item.publishedAt)}</span>
                 {item.featured && <span className="tag">featured</span>}
                 {!item.isActive && <span className="tag">hidden</span>}
+                {item.video && (
+                  <span className="tag bg-emerald-100 border border-emerald-300 text-emerald-800 font-mono text-[11px] font-bold">
+                    🎬 Video
+                  </span>
+                )}
                 {item.images?.length > 0 && (
                   <span className="tag bg-gold/15 text-gold-dark font-mono text-[11px]">
                     +{item.images.length} images
@@ -377,11 +397,19 @@ export default function ManageNews() {
             </div>
           </div>
 
-          <ImageUpload
-            label="Post cover image"
-            value={form.image}
-            onChange={(url) => setForm({ ...form, image: url })}
-          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ImageUpload
+              label="Post Cover Image"
+              value={form.image}
+              onChange={(url) => setForm({ ...form, image: url })}
+            />
+
+            <VideoUpload
+              label="Post Featured Video (MP4 / WebM)"
+              value={form.video || ''}
+              onChange={(url) => setForm({ ...form, video: url })}
+            />
+          </div>
 
           <div>
             <label className="label">Short description / excerpt</label>

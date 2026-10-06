@@ -16,23 +16,27 @@ export default function ProductCard({ product, disableLink = false }) {
             loading="lazy"
             className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105"
             onError={(e) => {
+              e.target.onerror = null;
               e.target.src = '/NMC logo.png';
+              e.target.className = 'h-full w-full object-contain p-4';
             }}
           />
         ) : (
-          <div className="grid h-full place-items-center text-ink/30 dark:text-paper/30 font-mono text-xs">{t('noImage') || 'No image'}</div>
+          <div className="grid h-full place-items-center text-ink/30 dark:text-paper/30 font-mono text-xs">
+            {t('noImage') || 'Export Product'}
+          </div>
         )}
 
         {/* HS Code Badge (Top-left) */}
         {product.hsCode && (
-          <span className="absolute left-3 top-3 rounded-full bg-ink/85 dark:bg-black/80 backdrop-blur px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-paper border border-white/20 shadow-sm">
+          <span className="absolute left-3 top-3 rounded-full bg-ink/85 dark:bg-black/80 backdrop-blur-md px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-paper border border-white/20 shadow-sm">
             HS {product.hsCode}
           </span>
         )}
 
         {/* Featured Tag (Top-right) */}
         {product.featured && (
-          <span className="absolute right-3 top-3 rounded-full bg-forest/90 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-gold border border-gold/40 shadow-sm">
+          <span className="absolute right-3 top-3 rounded-full bg-forest/90 dark:bg-forest/95 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-gold border border-gold/40 shadow-sm backdrop-blur-md">
             {t('featured') || 'Featured'}
           </span>
         )}
@@ -65,8 +69,12 @@ export default function ProductCard({ product, disableLink = false }) {
         {/* Bottom Alignment Bar (Sticks to bottom of card via mt-auto) */}
         <div className="mt-auto pt-3 border-t border-line/60 dark:border-line flex items-center justify-between gap-2 text-xs">
           {product.origin ? (
-            <span className="font-mono text-[11px] text-ink/60 dark:text-paper/60 truncate" title={product.origin}>
+            <span className="font-mono text-[11px] text-ink/65 dark:text-paper/65 truncate" title={product.origin}>
               📍 {product.origin}
+            </span>
+          ) : product.moq ? (
+            <span className="font-mono text-[11px] text-ink/65 dark:text-paper/65 truncate">
+              MOQ: {product.moq}
             </span>
           ) : (
             <span className="font-mono text-[11px] text-moss dark:text-gold font-semibold">

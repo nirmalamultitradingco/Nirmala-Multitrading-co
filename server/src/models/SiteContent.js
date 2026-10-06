@@ -24,6 +24,28 @@ const itemSchema = new mongoose.Schema(
   { _id: true }
 );
 
+const brochureSlideSchema = new mongoose.Schema(
+  {
+    type: { type: String, enum: ['image', 'video'], default: 'image' },
+    image: { type: String, default: '' },
+    video: { type: String, default: '' },
+    eyebrow: { type: String, default: '' },
+    title: { type: String, default: '' },
+    subtitle: { type: String, default: '' },
+    description: { type: String, default: '' },
+    badge: { type: String, default: 'Export Catalogue' },
+    caption: { type: String, default: '' },
+    primaryButtonText: { type: String, default: '' },
+    primaryButtonLink: { type: String, default: '' },
+    secondaryButtonText: { type: String, default: '' },
+    secondaryButtonLink: { type: String, default: '' },
+    chips: { type: [String], default: [] },
+    order: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
+  },
+  { _id: true }
+);
+
 const testimonialSchema = new mongoose.Schema(
   {
     logo: { type: String, default: '' },
@@ -938,6 +960,14 @@ const siteContentSchema = new mongoose.Schema(
         default:
           'Download detailed export specifications, packing formats, HS codes, and container payload capacities in verified PDF format.',
       },
+      image: { type: String, default: '' },
+      video: { type: String, default: '' },
+      autoPlay: { type: Boolean, default: true },
+      autoPlayInterval: { type: Number, default: 5 },
+      slides: {
+        type: [brochureSlideSchema],
+        default: [],
+      },
       showBadges: { type: Boolean, default: true },
       badges: {
         type: [
@@ -951,6 +981,71 @@ const siteContentSchema = new mongoose.Schema(
           { text: 'Verified Export Specs', color: 'gold', link: '' },
           { text: 'Direct PDF Downloads', color: 'emerald', link: '' },
           { text: 'Container Payload Data', color: 'blue', link: '' },
+        ],
+      },
+      buyerAssurance: {
+        show: { type: Boolean, default: true },
+        title: { type: String, default: 'Buyer Assurance' },
+        badge: { type: String, default: 'APEDA • ISO 22000' },
+        mediaType: { type: String, enum: ['none', 'image', 'video'], default: 'none' },
+        image: { type: String, default: '' },
+        video: { type: String, default: '' },
+        mediaDisplay: { type: String, enum: ['cardScreen', 'background'], default: 'cardScreen' },
+        mediaCaption: { type: String, default: 'Live Export Cargo & Facility' },
+        footerLeft: { type: String, default: 'Direct Seaport Loading' },
+        footerRight: { type: String, default: 'Mundra & JNPT' },
+        items: {
+          type: [
+            {
+              icon: { type: String, default: '📦' },
+              title: { type: String, default: 'Container Payload Data' },
+              subtitle: { type: String, default: '20ft (18-22 MT) • 40ft HC (28 MT)' },
+            },
+          ],
+          default: [
+            {
+              icon: '📦',
+              title: 'Container Payload Data',
+              subtitle: '20ft (18-22 MT) • 40ft HC (28 MT)',
+            },
+            {
+              icon: '🔬',
+              title: '100% Sortex Optical Cleaning',
+              subtitle: 'MRL < 0.01 Lab Assay Certified',
+            },
+            {
+              icon: '⚡',
+              title: 'Verified PDF Line Cards',
+              subtitle: 'Instant Technical Specifications',
+            },
+          ],
+        },
+      },
+      isActive: { type: Boolean, default: true },
+    },
+    blogHero: {
+      eyebrow: { type: String, default: 'Media & Market Insights' },
+      title: { type: String, default: 'Global Agro Export Blog & Market Insights' },
+      description: {
+        type: String,
+        default:
+          'In-depth global market intelligence, harvest cycles, FOB/CIF commodity price trends, and export quality standards from Nirmala Multitrading Co.',
+      },
+      image: { type: String, default: '' },
+      video: { type: String, default: '' },
+      showBadges: { type: Boolean, default: true },
+      badges: {
+        type: [
+          {
+            text: { type: String, default: '' },
+            color: { type: String, default: 'gold' },
+            link: { type: String, default: '' },
+          },
+        ],
+        default: [
+          { text: 'Market Trade Intelligence', color: 'gold', link: '' },
+          { text: 'Verified Agro Harvest Trends', color: 'emerald', link: '' },
+          { text: 'Global Export Logistics', color: 'blue', link: '' },
         ],
       },
       isActive: { type: Boolean, default: true },
@@ -974,16 +1069,6 @@ const siteContentSchema = new mongoose.Schema(
       bannerButtonLink: { type: String, default: '/become-a-partner' },
       bannerSecondaryText: { type: String, default: 'Contact Procurement Desk' },
       bannerSecondaryLink: { type: String, default: '/inquiry' },
-      isActive: { type: Boolean, default: true },
-    },
-    blogHero: {
-      eyebrow: { type: String, default: 'Media & Articles' },
-      title: { type: String, default: 'Blog' },
-      description: {
-        type: String,
-        default:
-          'Latest insights, global commodity market updates, company announcements, and trade stories.',
-      },
       isActive: { type: Boolean, default: true },
     },
     favicon: { type: String, default: '/favicon.svg' },

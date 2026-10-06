@@ -249,6 +249,55 @@ const getOrCreate = async () => {
       content.markModified('brochuresHero');
       modified = true;
     }
+    if (
+      !content.brochuresHero.buyerAssurance ||
+      !Array.isArray(content.brochuresHero.buyerAssurance.items) ||
+      content.brochuresHero.buyerAssurance.items.length === 0
+    ) {
+      content.brochuresHero.buyerAssurance = {
+        show: true,
+        title: 'Buyer Assurance',
+        badge: 'APEDA • ISO 22000',
+        mediaType: 'none',
+        image: '',
+        video: '',
+        mediaDisplay: 'cardScreen',
+        mediaCaption: 'Live Export Cargo & Facility',
+        footerLeft: 'Direct Seaport Loading',
+        footerRight: 'Mundra & JNPT',
+        items: [
+          {
+            icon: '📦',
+            title: 'Container Payload Data',
+            subtitle: '20ft (18-22 MT) • 40ft HC (28 MT)',
+          },
+          {
+            icon: '🔬',
+            title: '100% Sortex Optical Cleaning',
+            subtitle: 'MRL < 0.01 Lab Assay Certified',
+          },
+          {
+            icon: '⚡',
+            title: 'Verified PDF Line Cards',
+            subtitle: 'Instant Technical Specifications',
+          },
+        ],
+      };
+      content.markModified('brochuresHero');
+      modified = true;
+    } else {
+      let bMod = false;
+      const b = content.brochuresHero.buyerAssurance;
+      if (b.mediaType === undefined) { b.mediaType = 'none'; bMod = true; }
+      if (b.image === undefined) { b.image = ''; bMod = true; }
+      if (b.video === undefined) { b.video = ''; bMod = true; }
+      if (b.mediaDisplay === undefined) { b.mediaDisplay = 'cardScreen'; bMod = true; }
+      if (b.mediaCaption === undefined) { b.mediaCaption = 'Live Export Cargo & Facility'; bMod = true; }
+      if (bMod) {
+        content.markModified('brochuresHero');
+        modified = true;
+      }
+    }
   }
 
   if (modified) {

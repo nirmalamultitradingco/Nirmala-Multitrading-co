@@ -3,6 +3,7 @@ import { NavLink, Outlet, Link, useNavigate, useLocation } from 'react-router-do
 import { useAuth } from '../../context/AuthContext.jsx';
 import { BRAND } from '../../config.js';
 import api from '../../api/axios.js';
+import CommandPalette from './CommandPalette.jsx';
 
 const menuGroups = [
   {
@@ -45,6 +46,10 @@ export default function AdminLayout() {
   const mainRef = useRef(null);
   const [showTopBtn, setShowTopBtn] = useState(false);
   const [menuSearch, setMenuSearch] = useState('');
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const quickAddRef = useRef(null);
+
   const [counts, setCounts] = useState({
     inquiries: 0,
     newInquiries: 0,
@@ -53,6 +58,29 @@ export default function AdminLayout() {
     partners: 0,
     subscribers: 0,
   });
+
+  // Global Ctrl+K / Cmd+K listener for Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Click outside to close quickAdd dropdown
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (quickAddRef.current && !quickAddRef.current.contains(e.target)) {
+        setQuickAddOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Load persisted sidebar state (default: open on desktop, closed on mobile)
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -339,8 +367,9 @@ export default function AdminLayout() {
       */}
       <div className="flex flex-1 flex-col min-w-0 md:h-screen md:overflow-hidden">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-line/80 bg-white px-4 sm:px-6 lg:px-8 shadow-xs transition-colors">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-line/80 bg-white px-3 sm:px-6 lg:px-8 shadow-xs transition-colors gap-2">
+          {/* Left: Sidebar Toggle & Breadcrumb */}
+          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
             {/* THREE LINE (HAMBURGER ☰) TOGGLE BUTTON ON THE LEFT */}
             <button
               type="button"
@@ -357,45 +386,146 @@ export default function AdminLayout() {
             </button>
 
             {/* Active section title and breadcrumb */}
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-xs sm:text-sm font-bold text-ink truncate max-w-[130px] xs:max-w-[200px] sm:max-w-none">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <span className="text-xs sm:text-sm font-bold text-ink truncate max-w-[110px] xs:max-w-[160px] sm:max-w-none">
                 {activeLink?.label || 'Admin Panel'}
               </span>
-              <span className="hidden font-mono text-[11px] text-ink/40 sm:inline-block">
+              <span className="hidden font-mono text-[11px] text-ink/40 lg:inline-block">
                 / {BRAND.fullName}
               </span>
             </div>
           </div>
 
-          {/* Right Header Quick Actions & Status */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Live Server Indicator */}
-            <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-mono text-emerald-800 font-semibold shadow-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>MongoDB Online</span>
-            </div>
-
-            {/* Quick Add Product Shortcut */}
-            <Link
-              to="/admin/products?action=new"
-              className="hidden md:inline-flex items-center gap-1.5 rounded-full bg-forest px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#0d1e17] hover:border-gold border border-transparent transition"
-              title="Quickly add a new product to catalogue"
+          {/* Center: Global Spotlight Search Trigger */}
+          <div className="flex items-center">
+            <button
+              type="button"
+              onClick={() => setCommandOpen(true)}
+              className="flex items-center gap-2 rounded-full border border-line/90 bg-paper/80 px-2.5 sm:px-3.5 py-1.5 text-xs text-ink/75 hover:text-ink hover:border-gold hover:bg-white shadow-2xs transition-all cursor-pointer group"
+              title="Open Spotlight Search (Ctrl+K or ⌘K)"
             >
-              <span>+</span>
-              <span>New Product</span>
+              <span className="text-forest group-hover:scale-110 transition-transform text-xs sm:text-sm">🔍</span>
+              <span className="hidden md:inline font-medium">Quick Search / Jump...</span>
+              <span className="md:hidden font-medium text-[11px]">Search</span>
+              <kbd className="hidden sm:inline-flex items-center rounded border border-line/80 bg-white px-1.5 py-0.5 font-mono text-[10px] font-semibold text-ink/50 shadow-2xs">
+                Ctrl K
+              </kbd>
+            </button>
+          </div>
+
+          {/* Right Header Quick Actions & Status */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Live Inquiries Pill */}
+            <Link
+              to="/admin/inquiries"
+              className={`hidden sm:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold transition border ${
+                counts.newInquiries > 0
+                  ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                  : 'bg-paper text-ink/70 border-line hover:border-gold hover:text-ink'
+              }`}
+              title={`${counts.newInquiries} unread buyer inquiries`}
+            >
+              <span className="text-xs">✉️</span>
+              <span className="hidden md:inline">Inquiries</span>
+              {counts.newInquiries > 0 && (
+                <span className="rounded-full bg-amber-600 px-1.5 py-0.2 text-[10px] font-bold text-white leading-tight">
+                  {counts.newInquiries}
+                </span>
+              )}
             </Link>
 
+            {/* Quick Add Dropdown Menu */}
+            <div className="relative" ref={quickAddRef}>
+              <button
+                type="button"
+                onClick={() => setQuickAddOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-forest px-2.5 sm:px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#0d1e17] hover:border-gold border border-transparent transition cursor-pointer"
+                aria-expanded={quickAddOpen}
+                title="Create new product, category, brochure or blog"
+              >
+                <span className="text-gold font-bold text-sm leading-none">+</span>
+                <span className="hidden xs:inline">Quick Add</span>
+                <span className="text-[10px] text-white/70">▾</span>
+              </button>
+
+              {quickAddOpen && (
+                <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-line bg-white p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95">
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink/50 border-b border-line/60 mb-1">
+                    Create / Upload New
+                  </div>
+                  <Link
+                    to="/admin/products?action=new"
+                    onClick={() => setQuickAddOpen(false)}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-ink hover:bg-forest hover:text-white transition group"
+                  >
+                    <span className="text-base group-hover:scale-110 transition">📦</span>
+                    <div>
+                      <div className="font-bold">New Product</div>
+                      <div className="text-[10px] text-ink/60 group-hover:text-white/80">Add item to catalogue</div>
+                    </div>
+                  </Link>
+                  <Link
+                    to="/admin/segments?action=new"
+                    onClick={() => setQuickAddOpen(false)}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-ink hover:bg-forest hover:text-white transition group"
+                  >
+                    <span className="text-base group-hover:scale-110 transition">🏷️</span>
+                    <div>
+                      <div className="font-bold">New Category</div>
+                      <div className="text-[10px] text-ink/60 group-hover:text-white/80">Create business segment</div>
+                    </div>
+                  </Link>
+                  <Link
+                    to="/admin/brochures?action=new"
+                    onClick={() => setQuickAddOpen(false)}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-ink hover:bg-forest hover:text-white transition group"
+                  >
+                    <span className="text-base group-hover:scale-110 transition">📑</span>
+                    <div>
+                      <div className="font-bold">Upload Brochure PDF</div>
+                      <div className="text-[10px] text-ink/60 group-hover:text-white/80">Add buyer PDF doc</div>
+                    </div>
+                  </Link>
+                  <Link
+                    to="/admin/news?action=new"
+                    onClick={() => setQuickAddOpen(false)}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-ink hover:bg-forest hover:text-white transition group"
+                  >
+                    <span className="text-base group-hover:scale-110 transition">📰</span>
+                    <div>
+                      <div className="font-bold">Post Blog / News</div>
+                      <div className="text-[10px] text-ink/60 group-hover:text-white/80">Publish article & photos</div>
+                    </div>
+                  </Link>
+                  <Link
+                    to="/admin/partners?action=new"
+                    onClick={() => setQuickAddOpen(false)}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-ink hover:bg-forest hover:text-white transition group"
+                  >
+                    <span className="text-base group-hover:scale-110 transition">🤝</span>
+                    <div>
+                      <div className="font-bold">Add Partner Logo</div>
+                      <div className="text-[10px] text-ink/60 group-hover:text-white/80">Showcase trusted client</div>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* View Live Website */}
             <Link
               to="/"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-paper px-3 py-1.5 text-xs font-semibold text-ink/80 transition hover:border-gold hover:text-ink hover:bg-gold/10"
+              className="hidden sm:inline-flex items-center gap-1 rounded-full border border-line bg-paper px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-ink/80 transition hover:border-gold hover:text-ink hover:bg-gold/10"
+              title="Open public website in new tab"
             >
-              <span>View Website</span>
+              <span>Site</span>
               <span aria-hidden="true">↗</span>
             </Link>
 
-            <div className="flex items-center gap-2 pl-2 border-l border-line/60">
+            {/* Admin Profile */}
+            <div className="flex items-center gap-2 pl-1.5 sm:pl-2 border-l border-line/60">
               <Link
                 to="/admin/profile"
                 className="flex items-center gap-2 hover:opacity-85 transition group"
@@ -404,11 +534,11 @@ export default function AdminLayout() {
                 <div className="h-8 w-8 rounded-full bg-forest text-gold flex items-center justify-center text-xs font-bold font-mono shadow-xs border border-gold/30 group-hover:scale-105 transition-transform">
                   {user?.name ? user.name[0].toUpperCase() : user?.email ? user.email[0].toUpperCase() : 'A'}
                 </div>
-                <div className="hidden sm:flex flex-col text-left">
+                <div className="hidden xl:flex flex-col text-left">
                   <span className="text-xs font-bold text-ink leading-tight group-hover:text-forest">
                     {user?.name || 'Admin'}
                   </span>
-                  <span className="text-[10px] font-mono text-ink/50 leading-tight">Profile & Security</span>
+                  <span className="text-[10px] font-mono text-ink/50 leading-tight">Settings</span>
                 </div>
               </Link>
             </div>
@@ -446,6 +576,9 @@ export default function AdminLayout() {
           )}
         </main>
       </div>
+
+      {/* GLOBAL SPOTLIGHT COMMAND PALETTE */}
+      <CommandPalette isOpen={commandOpen} onClose={() => setCommandOpen(false)} />
     </div>
   );
 }

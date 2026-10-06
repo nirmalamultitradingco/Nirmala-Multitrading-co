@@ -8,6 +8,7 @@ const segmentSchema = new mongoose.Schema(
     slug: { type: String, unique: true, index: true },
     description: { type: String, default: '' },
     image: { type: String, default: '' },
+    video: { type: String, default: '' },
     order: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
   },

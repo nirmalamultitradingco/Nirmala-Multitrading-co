@@ -6,6 +6,7 @@ const newsSectionSchema = new mongoose.Schema(
     subtitle: { type: String, default: '' },
     text: { type: String, default: '' },
     image: { type: String, default: '' },
+    video: { type: String, default: '' },
     order: { type: Number, default: 0 },
   },
   { _id: true }
@@ -18,6 +19,7 @@ const newsSchema = new mongoose.Schema(
     excerpt: { type: String, default: '' },
     content: { type: String, default: '' },
     image: { type: String, default: '' },
+    video: { type: String, default: '' },
     images: { type: [String], default: [] },
     sections: { type: [newsSectionSchema], default: [] },
     publishedAt: { type: Date, default: Date.now },

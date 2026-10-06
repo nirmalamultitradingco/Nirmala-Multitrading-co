@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { BRAND } from '../config.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { useSiteContent } from '../context/SiteContentContext.jsx';
-import api from '../api/axios.js';
+import api, { asset } from '../api/axios.js';
 import TestimonialsSlider from '../components/TestimonialsSlider.jsx';
 
 const defaultAboutHero = {
@@ -227,10 +227,15 @@ export default function About() {
                         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-forest/10 border border-line/60 shadow-md">
                           {item.image ? (
                             <img
-                              src={item.image}
+                              src={asset(item.image)}
                               alt={item.title || 'Our approach'}
                               loading="lazy"
                               className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = '/NMC logo.png';
+                                e.currentTarget.className = 'h-full w-full object-contain p-6 bg-forest/5';
+                              }}
                             />
                           ) : (
                             <div className="h-full w-full bg-forest flex items-center justify-center text-white/40 font-mono text-sm">
@@ -328,10 +333,15 @@ export default function About() {
                   <div>
                     {item.image && (
                       <img
-                        src={item.image}
+                        src={asset(item.image)}
                         alt=""
                         loading="lazy"
                         className="mb-5 h-40 w-full rounded-xl object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/NMC logo.png';
+                          e.currentTarget.className = 'mb-5 h-40 w-full rounded-xl object-contain p-4 bg-forest/5';
+                        }}
                       />
                     )}
                     <span className="font-mono text-sm font-bold text-gold">

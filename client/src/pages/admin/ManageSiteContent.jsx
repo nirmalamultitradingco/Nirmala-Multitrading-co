@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api, { asset } from '../../api/axios.js';
 import ImageUpload from '../../components/admin/ImageUpload.jsx';
 import VideoUpload from '../../components/admin/VideoUpload.jsx';
@@ -559,12 +560,46 @@ const defaults = {
     title: 'Export Product Catalogues & Line Cards',
     description:
       'Download detailed export specifications, packing formats, HS codes, and container payload capacities in verified PDF format.',
+    image: '',
+    video: '',
+    autoPlay: true,
+    autoPlayInterval: 5,
+    slides: [],
     showBadges: true,
     badges: [
       { text: 'Verified Export Specs', color: 'gold', link: '' },
       { text: 'Direct PDF Downloads', color: 'emerald', link: '' },
       { text: 'Container Payload Data', color: 'blue', link: '' },
     ],
+    buyerAssurance: {
+      show: true,
+      title: 'Buyer Assurance',
+      badge: 'APEDA • ISO 22000',
+      mediaType: 'none',
+      image: '',
+      video: '',
+      mediaDisplay: 'cardScreen',
+      mediaCaption: 'Live Export Cargo & Facility',
+      footerLeft: 'Direct Seaport Loading',
+      footerRight: 'Mundra & JNPT',
+      items: [
+        {
+          icon: '📦',
+          title: 'Container Payload Data',
+          subtitle: '20ft (18-22 MT) • 40ft HC (28 MT)',
+        },
+        {
+          icon: '🔬',
+          title: '100% Sortex Optical Cleaning',
+          subtitle: 'MRL < 0.01 Lab Assay Certified',
+        },
+        {
+          icon: '⚡',
+          title: 'Verified PDF Line Cards',
+          subtitle: 'Instant Technical Specifications',
+        },
+      ],
+    },
     isActive: true,
   },
   partnersPage: {
@@ -5850,10 +5885,89 @@ const DEFAULT_BROCHURE_BADGES = [
   { text: 'Container Payload Data', color: 'blue', link: '' },
 ];
 
+const DEFAULT_BUYER_ASSURANCE = {
+  show: true,
+  title: 'Buyer Assurance',
+  badge: 'APEDA • ISO 22000',
+  mediaType: 'none',
+  image: '',
+  video: '',
+  mediaDisplay: 'cardScreen',
+  mediaCaption: 'Live Export Cargo & Facility',
+  footerLeft: 'Direct Seaport Loading',
+  footerRight: 'Mundra & JNPT',
+  items: [
+    {
+      icon: '📦',
+      title: 'Container Payload Data',
+      subtitle: '20ft (18-22 MT) • 40ft HC (28 MT)',
+    },
+    {
+      icon: '🔬',
+      title: '100% Sortex Optical Cleaning',
+      subtitle: 'MRL < 0.01 Lab Assay Certified',
+    },
+    {
+      icon: '⚡',
+      title: 'Verified PDF Line Cards',
+      subtitle: 'Instant Technical Specifications',
+    },
+  ],
+};
+
 function BrochuresHeroEditor({ section, setSection }) {
   const current = section || {};
   const update = (key, value) => {
     setSection({ ...current, [key]: value });
+  };
+
+  const rawSlides = Array.isArray(current.slides) ? current.slides : [];
+  const slides = rawSlides;
+
+  const updateSlides = (newSlides) => {
+    update('slides', newSlides);
+  };
+
+  const updateSlideItem = (index, field, value) => {
+    const copy = [...slides];
+    copy[index] = { ...copy[index], [field]: value };
+    updateSlides(copy);
+  };
+
+  const addSlide = (initialType = 'image') => {
+    const newSlide = {
+      type: initialType,
+      image: '',
+      video: '',
+      eyebrow: '⚓ MUNDRA & JNPT PORTS • 40+ COUNTRIES',
+      title: 'Export Product Catalogues & Line Cards',
+      subtitle: 'Verified APEDA & FSSAI Standards',
+      description: 'Download detailed export specifications, packing formats, HS codes, and container payload capacities in verified PDF format.',
+      badge: 'Official Catalogues',
+      primaryButtonText: 'Explore Product Segments ↓',
+      primaryButtonLink: '#product-segments',
+      secondaryButtonText: 'Request Custom Line Card ✉️',
+      secondaryButtonLink: '/inquiry?subject=OfficialCatalogues',
+      chips: ['🚢 FCL & LCL Consolidation', '🔬 Lab MRL < 0.01 Tested', '📦 Verified PDF Format'],
+      isActive: true,
+      order: slides.length + 1,
+    };
+    updateSlides([...slides, newSlide]);
+  };
+
+  const removeSlide = (index) => {
+    const copy = slides.filter((_, idx) => idx !== index);
+    updateSlides(copy);
+  };
+
+  const moveSlide = (index, direction) => {
+    const targetIdx = index + direction;
+    if (targetIdx < 0 || targetIdx >= slides.length) return;
+    const copy = [...slides];
+    const temp = copy[index];
+    copy[index] = copy[targetIdx];
+    copy[targetIdx] = temp;
+    updateSlides(copy);
   };
 
   const rawBadges = Array.isArray(current.badges) && current.badges.length > 0
@@ -5910,12 +6024,59 @@ function BrochuresHeroEditor({ section, setSection }) {
     return found ? found.bgClass : (col?.startsWith('bg-') ? col : 'bg-gold');
   };
 
+  // Buyer Assurance Trust Card State & Helpers
+  const buyerAssurance = current.buyerAssurance || DEFAULT_BUYER_ASSURANCE;
+  const assuranceItems = Array.isArray(buyerAssurance.items) && buyerAssurance.items.length > 0
+    ? buyerAssurance.items
+    : DEFAULT_BUYER_ASSURANCE.items;
+
+  const updateBuyerAssurance = (field, value) => {
+    update('buyerAssurance', {
+      ...buyerAssurance,
+      [field]: value,
+    });
+  };
+
+  const updateAssuranceItem = (index, field, value) => {
+    const copy = [...assuranceItems];
+    copy[index] = { ...copy[index], [field]: value };
+    updateBuyerAssurance('items', copy);
+  };
+
+  const addAssuranceItem = () => {
+    const newItem = {
+      icon: '🛡️',
+      title: 'New Buyer Specification',
+      subtitle: 'Verified Export Cargo Compliance',
+    };
+    updateBuyerAssurance('items', [...assuranceItems, newItem]);
+  };
+
+  const removeAssuranceItem = (index) => {
+    const copy = assuranceItems.filter((_, idx) => idx !== index);
+    updateBuyerAssurance('items', copy);
+  };
+
+  const moveAssuranceItem = (index, direction) => {
+    const targetIdx = index + direction;
+    if (targetIdx < 0 || targetIdx >= assuranceItems.length) return;
+    const copy = [...assuranceItems];
+    const temp = copy[index];
+    copy[index] = copy[targetIdx];
+    copy[targetIdx] = temp;
+    updateBuyerAssurance('items', copy);
+  };
+
+  const resetBuyerAssurance = () => {
+    update('buyerAssurance', DEFAULT_BUYER_ASSURANCE);
+  };
+
   return (
     <div className="space-y-6">
-      {/* 1. Header Typography */}
+      {/* 1. Header Typography (Default Fallbacks) */}
       <div className="rounded-2xl border border-line bg-surface/30 p-5 space-y-4">
         <h4 className="text-xs font-bold uppercase tracking-wider text-moss">
-          Top Eyebrow, Title & Summary
+          Global Default Eyebrow, Title & Summary (Fallback)
         </h4>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -5946,6 +6107,359 @@ function BrochuresHeroEditor({ section, setSection }) {
             value={current.description || ''}
             onChange={(e) => update('description', e.target.value)}
             placeholder="Download detailed export specifications, packing formats, HS codes..."
+          />
+        </div>
+      </div>
+
+      {/* 2. Brochures Hero Slider Management (Photos & Videos) */}
+      <div className="rounded-2xl border border-line bg-white p-5 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-base">🎞️</span>
+              <h4 className="font-display text-base font-bold text-ink">
+                Full Hero Section Slider Management (Photos & Videos)
+              </h4>
+              <span className="rounded-full bg-gold/20 border border-gold/40 px-2.5 py-0.5 text-[11px] font-mono font-bold text-ink">
+                {slides.length} {slides.length === 1 ? 'Slide' : 'Slides'}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-ink/65">
+              The entire hero banner operates as a luxury media slider. Each slide can have its own background photo or video, custom headline, description, CTA buttons, and spec chips.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => addSlide('image')}
+              className="rounded-xl border border-line bg-[#fbf9f4] hover:bg-forest/10 hover:border-forest/30 text-ink px-3 py-1.5 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <span>+ 🖼️ Add Photo Slide</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => addSlide('video')}
+              className="rounded-xl bg-forest hover:bg-[#0f241a] text-white px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <span>+ 🎬 Add Video Slide</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Slider Playback Settings */}
+        <div className="rounded-xl border border-line/70 bg-[#faf8f4] p-3.5 flex flex-wrap items-center justify-between gap-4 text-xs">
+          <label className="flex items-center gap-2 font-semibold text-ink cursor-pointer">
+            <input
+              type="checkbox"
+              checked={current.autoPlay !== false}
+              onChange={(e) => update('autoPlay', e.target.checked)}
+              className="rounded border-line text-forest focus:ring-forest cursor-pointer"
+            />
+            <span>Enable Auto-Rotate (Autoplay Slider)</span>
+          </label>
+
+          <div className="flex items-center gap-2 font-mono">
+            <span className="text-ink/60">Slide Duration:</span>
+            <input
+              type="number"
+              min="2"
+              max="30"
+              value={current.autoPlayInterval || 5}
+              onChange={(e) => update('autoPlayInterval', Math.max(2, Number(e.target.value) || 5))}
+              className="w-16 rounded-lg border border-line bg-white px-2 py-1 text-center font-bold text-ink outline-none focus:border-forest shadow-2xs"
+            />
+            <span className="text-ink/60">seconds</span>
+          </div>
+        </div>
+
+        {/* Slides List */}
+        {slides.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-line p-8 text-center bg-[#fdfcf9] space-y-3">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/15 text-gold text-2xl">
+              🎞️
+            </div>
+            <h5 className="font-display text-sm font-bold text-ink">No Custom Slides Added Yet</h5>
+            <p className="text-xs text-ink/60 max-w-md mx-auto">
+              Add multiple slides to turn the hero showcase into an interactive photo/video slider, or use the single fallback media below.
+            </p>
+            <div className="pt-2 flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => addSlide('image')}
+                className="btn-primary text-xs py-2 px-4 cursor-pointer shadow-sm"
+              >
+                + Add First Slide
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {slides.map((slide, idx) => (
+              <div
+                key={idx}
+                className="group relative rounded-2xl border border-line bg-[#fdfcf9] p-4.5 transition hover:border-gold/50 hover:shadow-sm space-y-4"
+              >
+                {/* Slide Top Bar */}
+                <div className="flex items-center justify-between border-b border-line/60 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-forest/10 font-mono text-xs font-bold text-forest">
+                      {idx + 1}
+                    </span>
+                    <span className="text-xs font-bold text-ink">
+                      Slide #{idx + 1}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-mono font-bold ${
+                        slide.type === 'video'
+                          ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                          : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }`}
+                    >
+                      {slide.type === 'video' ? '🎬 Video Slide' : '🖼️ Photo Slide'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {/* Active toggle */}
+                    <label className="flex items-center gap-1.5 text-xs text-ink/70 mr-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={slide.isActive !== false}
+                        onChange={(e) => updateSlideItem(idx, 'isActive', e.target.checked)}
+                        className="rounded border-line text-forest"
+                      />
+                      <span>Active</span>
+                    </label>
+
+                    {/* Move Up */}
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => moveSlide(idx, -1)}
+                      className="h-7 w-7 rounded-lg border border-line bg-white hover:bg-forest/10 text-ink/70 hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition flex items-center justify-center text-xs cursor-pointer"
+                      title="Move Up"
+                    >
+                      ↑
+                    </button>
+                    {/* Move Down */}
+                    <button
+                      type="button"
+                      disabled={idx === slides.length - 1}
+                      onClick={() => moveSlide(idx, 1)}
+                      className="h-7 w-7 rounded-lg border border-line bg-white hover:bg-forest/10 text-ink/70 hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition flex items-center justify-center text-xs cursor-pointer"
+                      title="Move Down"
+                    >
+                      ↓
+                    </button>
+                    {/* Delete Slide */}
+                    <button
+                      type="button"
+                      onClick={() => removeSlide(idx)}
+                      className="h-7 px-2 rounded-lg border border-red-200 bg-red-50 text-clay hover:bg-red-100 transition text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      title="Delete Slide"
+                    >
+                      <span>🗑️</span>
+                      <span className="hidden sm:inline">Remove</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Media Type Selector */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-ink/70">Slide Background Media:</span>
+                  <div className="inline-flex rounded-xl border border-line p-0.5 bg-white shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => updateSlideItem(idx, 'type', 'image')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                        slide.type !== 'video'
+                          ? 'bg-forest text-white shadow-xs'
+                          : 'text-ink/65 hover:text-ink'
+                      }`}
+                    >
+                      <span>🖼️</span>
+                      <span>Photo / Image</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateSlideItem(idx, 'type', 'video')}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                        slide.type === 'video'
+                          ? 'bg-forest text-white shadow-xs'
+                          : 'text-ink/65 hover:text-ink'
+                      }`}
+                    >
+                      <span>🎬</span>
+                      <span>Video (MP4 / WebM)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Media Upload Area */}
+                <div className="rounded-xl border border-line/70 bg-white p-3.5 space-y-3">
+                  {slide.type === 'video' ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <VideoUpload
+                        label={`Slide #${idx + 1} Background Video (MP4 / WebM)`}
+                        value={slide.video || ''}
+                        onChange={(url) => updateSlideItem(idx, 'video', url)}
+                      />
+                      <ImageUpload
+                        label={`Slide #${idx + 1} Video Poster (Optional Thumbnail)`}
+                        value={slide.image || ''}
+                        onChange={(url) => updateSlideItem(idx, 'image', url)}
+                      />
+                    </div>
+                  ) : (
+                    <ImageUpload
+                      label={`Slide #${idx + 1} Full Background Photo`}
+                      value={slide.image || ''}
+                      onChange={(url) => updateSlideItem(idx, 'image', url)}
+                    />
+                  )}
+                </div>
+
+                {/* Slide Text Overlays */}
+                <div className="space-y-3 pt-2 border-t border-line/60">
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="label">Eyebrow Pill Tag</label>
+                      <input
+                        className="field"
+                        value={slide.eyebrow || ''}
+                        onChange={(e) => updateSlideItem(idx, 'eyebrow', e.target.value)}
+                        placeholder="e.g. ⚓ MUNDRA & JNPT PORTS • 40+ COUNTRIES"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Slide Heading / Title</label>
+                      <input
+                        className="field font-bold"
+                        value={slide.title || ''}
+                        onChange={(e) => updateSlideItem(idx, 'title', e.target.value)}
+                        placeholder="e.g. Sortex Cleaned Spices & Agro Catalogues"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Corner Badge</label>
+                      <input
+                        className="field"
+                        value={slide.badge || ''}
+                        onChange={(e) => updateSlideItem(idx, 'badge', e.target.value)}
+                        placeholder="e.g. Official Catalogues"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="label">Subtitle / Tagline</label>
+                      <input
+                        className="field"
+                        value={slide.subtitle || ''}
+                        onChange={(e) => updateSlideItem(idx, 'subtitle', e.target.value)}
+                        placeholder="e.g. European & US FDA Purity Standards"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Slide Description</label>
+                      <textarea
+                        className="field"
+                        rows="2"
+                        value={slide.description || ''}
+                        onChange={(e) => updateSlideItem(idx, 'description', e.target.value)}
+                        placeholder="Download verified export specifications, packing formats, HS codes..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Buttons & Chips */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="label">Primary Button Text</label>
+                        <input
+                          className="field"
+                          value={slide.primaryButtonText || ''}
+                          onChange={(e) => updateSlideItem(idx, 'primaryButtonText', e.target.value)}
+                          placeholder="Explore Product Segments ↓"
+                        />
+                      </div>
+                      <div>
+                        <label className="label">Primary Button Link</label>
+                        <input
+                          className="field font-mono"
+                          value={slide.primaryButtonLink || ''}
+                          onChange={(e) => updateSlideItem(idx, 'primaryButtonLink', e.target.value)}
+                          placeholder="#product-segments"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="label">Secondary Button Text</label>
+                        <input
+                          className="field"
+                          value={slide.secondaryButtonText || ''}
+                          onChange={(e) => updateSlideItem(idx, 'secondaryButtonText', e.target.value)}
+                          placeholder="Request Custom Line Card ✉️"
+                        />
+                      </div>
+                      <div>
+                        <label className="label">Secondary Button Link</label>
+                        <input
+                          className="field font-mono"
+                          value={slide.secondaryButtonLink || ''}
+                          onChange={(e) => updateSlideItem(idx, 'secondaryButtonLink', e.target.value)}
+                          placeholder="/inquiry?subject=OfficialCatalogues"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">Spec Highlights / Badges (Comma-separated)</label>
+                    <CommaSeparatedInput
+                      className="field"
+                      value={slide.chips}
+                      placeholder="e.g. 🚢 FCL & LCL Consolidation, 🔬 Lab MRL < 0.01 Tested, 📦 Verified PDF Format"
+                      onChange={(arr) => updateSlideItem(idx, 'chips', arr)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 3. Fallback Single Media (Displayed if no slides added) */}
+      <div className="rounded-2xl border border-line bg-surface/30 p-5 shadow-xs space-y-4">
+        <div className="border-b border-line pb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📌</span>
+            <h4 className="font-display text-base font-bold text-ink">
+              Fallback Single Media (If No Slides Active)
+            </h4>
+          </div>
+          <p className="mt-1 text-xs text-ink/65">
+            Single feature photo or video used when slider items are not configured.
+          </p>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <ImageUpload
+            label="Fallback Hero Image"
+            value={current.image || ''}
+            onChange={(url) => update('image', url)}
+          />
+
+          <VideoUpload
+            label="Fallback Hero Video"
+            value={current.video || ''}
+            onChange={(url) => update('video', url)}
           />
         </div>
       </div>
@@ -6108,54 +6622,577 @@ function BrochuresHeroEditor({ section, setSection }) {
         )}
       </div>
 
-      {/* 3. Live Hero Header Preview */}
+      {/* 4. Buyer Assurance Trust Card (Hero Right Widget / Small Screen) */}
+      <div className="rounded-2xl border border-line bg-white p-5 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-base">🛡️</span>
+              <h4 className="font-display text-base font-bold text-ink">
+                Buyer Assurance Trust Card (Hero Right Widget / Small Screen)
+              </h4>
+              <span className="rounded-full bg-gold/20 border border-gold/40 px-2.5 py-0.5 text-[11px] font-mono font-bold text-ink">
+                {assuranceItems.length} Points
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-ink/65">
+              Customize the floating trust verification card displayed on the right side of the Brochures hero section (card title, accreditation tag, specification points, and port tags).
+            </p>
+          </div>
+
+          <label className="flex items-center gap-2 text-xs font-bold text-ink cursor-pointer bg-surface/50 border border-line px-3 py-1.5 rounded-xl hover:bg-surface transition">
+            <input
+              type="checkbox"
+              checked={buyerAssurance.show !== false}
+              onChange={(e) => updateBuyerAssurance('show', e.target.checked)}
+              className="rounded border-line text-forest focus:ring-forest cursor-pointer"
+            />
+            <span>Show Card on Page</span>
+          </label>
+        </div>
+
+        {buyerAssurance.show !== false ? (
+          <div className="space-y-5">
+            {/* Top Card Settings: Title & Badge */}
+            <div className="grid gap-4 sm:grid-cols-2 rounded-xl border border-line/70 bg-[#faf8f4] p-4">
+              <div>
+                <label className="label">Card Header Title</label>
+                <input
+                  className="field"
+                  value={buyerAssurance.title || ''}
+                  onChange={(e) => updateBuyerAssurance('title', e.target.value)}
+                  placeholder="Buyer Assurance"
+                />
+              </div>
+              <div>
+                <label className="label">Accreditation Tag / Badge</label>
+                <input
+                  className="field font-mono"
+                  value={buyerAssurance.badge || ''}
+                  onChange={(e) => updateBuyerAssurance('badge', e.target.value)}
+                  placeholder="APEDA • ISO 22000"
+                />
+              </div>
+            </div>
+
+            {/* Small Screen Media Settings (Photo & Video) */}
+            <div className="rounded-xl border border-line/70 bg-[#faf8f4] p-4 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line/50 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">📺</span>
+                    <h5 className="text-xs font-bold text-ink uppercase tracking-wider">
+                      Small Screen Media (Photo / Video Display)
+                    </h5>
+                  </div>
+                  <p className="mt-0.5 text-[11px] text-ink/65">
+                    Add a facility video, cargo loading drone clip, or high-res product photo into this small screen widget.
+                  </p>
+                </div>
+
+                {/* Media Type Buttons */}
+                <div className="flex items-center gap-1 bg-white border border-line rounded-lg p-1 text-xs font-semibold shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => updateBuyerAssurance('mediaType', 'none')}
+                    className={`px-2.5 py-1 rounded transition cursor-pointer ${
+                      buyerAssurance.mediaType === 'none' || (!buyerAssurance.mediaType && !buyerAssurance.image && !buyerAssurance.video)
+                        ? 'bg-ink text-white font-bold'
+                        : 'text-ink/70 hover:bg-surface'
+                    }`}
+                  >
+                    No Media
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateBuyerAssurance('mediaType', 'image')}
+                    className={`px-2.5 py-1 rounded transition cursor-pointer flex items-center gap-1 ${
+                      buyerAssurance.mediaType === 'image' || (!buyerAssurance.mediaType && buyerAssurance.image && !buyerAssurance.video)
+                        ? 'bg-forest text-white font-bold'
+                        : 'text-ink/70 hover:bg-surface'
+                    }`}
+                  >
+                    <span>🖼️</span> Photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateBuyerAssurance('mediaType', 'video')}
+                    className={`px-2.5 py-1 rounded transition cursor-pointer flex items-center gap-1 ${
+                      buyerAssurance.mediaType === 'video' || (!buyerAssurance.mediaType && buyerAssurance.video)
+                        ? 'bg-forest text-white font-bold'
+                        : 'text-ink/70 hover:bg-surface'
+                    }`}
+                  >
+                    <span>🎬</span> Video
+                  </button>
+                </div>
+              </div>
+
+              {/* Upload controls when media is enabled */}
+              {(buyerAssurance.mediaType === 'image' ||
+                buyerAssurance.mediaType === 'video' ||
+                (!buyerAssurance.mediaType && (buyerAssurance.image || buyerAssurance.video))) && (
+                <div className="space-y-4 pt-1">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {/* Video Upload if video mode */}
+                    {(buyerAssurance.mediaType === 'video' || (!buyerAssurance.mediaType && buyerAssurance.video)) && (
+                      <VideoUpload
+                        label="Small Screen Video (MP4 / WebM)"
+                        value={buyerAssurance.video || ''}
+                        onChange={(url) => {
+                          updateBuyerAssurance('video', url);
+                          if (url && buyerAssurance.mediaType !== 'video') {
+                            updateBuyerAssurance('mediaType', 'video');
+                          }
+                        }}
+                      />
+                    )}
+
+                    {/* Image / Poster Upload */}
+                    <ImageUpload
+                      label={
+                        buyerAssurance.mediaType === 'video'
+                          ? 'Video Poster / Fallback Image'
+                          : 'Small Screen Photo'
+                      }
+                      value={buyerAssurance.image || ''}
+                      onChange={(url) => {
+                        updateBuyerAssurance('image', url);
+                        if (url && buyerAssurance.mediaType === 'none') {
+                          updateBuyerAssurance('mediaType', 'image');
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {/* Media Display Style */}
+                    <div>
+                      <label className="text-[11px] font-bold text-ink/70 mb-1 block">
+                        Media Display Style in Card
+                      </label>
+                      <select
+                        className="field text-xs h-9"
+                        value={buyerAssurance.mediaDisplay || 'cardScreen'}
+                        onChange={(e) => updateBuyerAssurance('mediaDisplay', e.target.value)}
+                      >
+                        <option value="cardScreen">📺 Mini Screen Window (Above Specifications)</option>
+                        <option value="background">🌌 Card Backdrop (Plays Behind Text)</option>
+                      </select>
+                    </div>
+
+                    {/* Media Caption / Tag */}
+                    <div>
+                      <label className="text-[11px] font-bold text-ink/70 mb-1 block">
+                        Screen Tag / Caption Label
+                      </label>
+                      <input
+                        className="field text-xs h-9 font-mono"
+                        value={buyerAssurance.mediaCaption || ''}
+                        onChange={(e) => updateBuyerAssurance('mediaCaption', e.target.value)}
+                        placeholder="Live Export Cargo & Facility"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* List of Assurance Items */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-ink uppercase tracking-wider">
+                  Assurance Specification Points ({assuranceItems.length})
+                </span>
+                <span className="text-[11px] text-ink/50">
+                  Icons, titles, and technical payload details
+                </span>
+              </div>
+
+              {assuranceItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="group rounded-xl border border-line/80 bg-[#fbf9f4] p-4 transition hover:border-gold/40 hover:bg-white shadow-xs space-y-3"
+                >
+                  <div className="flex items-center justify-between border-b border-line/50 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-ink/50">#{idx + 1}</span>
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold/15 text-gold text-sm border border-gold/20">
+                        {item.icon || '✓'}
+                      </span>
+                      <span className="font-bold text-xs text-ink">{item.title || 'Untitled Point'}</span>
+                    </div>
+
+                    {/* Actions: Move Up, Move Down, Delete */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => moveAssuranceItem(idx, -1)}
+                        title="Move Up"
+                        className="h-7 w-7 rounded-lg border border-line bg-white text-xs font-bold text-ink/70 hover:bg-surface disabled:opacity-30 cursor-pointer flex items-center justify-center"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === assuranceItems.length - 1}
+                        onClick={() => moveAssuranceItem(idx, 1)}
+                        title="Move Down"
+                        className="h-7 w-7 rounded-lg border border-line bg-white text-xs font-bold text-ink/70 hover:bg-surface disabled:opacity-30 cursor-pointer flex items-center justify-center"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeAssuranceItem(idx)}
+                        title="Delete Item"
+                        className="h-7 w-7 rounded-lg border border-red-200 bg-red-50 text-xs font-bold text-red-600 hover:bg-red-100 cursor-pointer flex items-center justify-center ml-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-12">
+                    {/* Icon selection */}
+                    <div className="sm:col-span-3">
+                      <label className="text-[11px] font-bold text-ink/70 mb-1 block">Icon / Emoji</label>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          className="field h-9 text-xs text-center font-bold w-12 shrink-0"
+                          value={item.icon || ''}
+                          onChange={(e) => updateAssuranceItem(idx, 'icon', e.target.value)}
+                          placeholder="📦"
+                        />
+                        {/* Quick Icon suggestions */}
+                        <div className="flex flex-wrap items-center gap-1">
+                          {['📦', '🔬', '⚡', '🚢', '🛡️', '📋', '🌾', '✅'].map((ico) => (
+                            <button
+                              key={ico}
+                              type="button"
+                              onClick={() => updateAssuranceItem(idx, 'icon', ico)}
+                              className="h-7 w-7 rounded border border-line/60 bg-white hover:bg-gold/15 text-xs transition cursor-pointer flex items-center justify-center"
+                              title={`Set icon to ${ico}`}
+                            >
+                              {ico}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <div className="sm:col-span-4">
+                      <label className="text-[11px] font-bold text-ink/70 mb-1 block">
+                        Title / Specification <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        className="field h-9 text-xs"
+                        value={item.title || ''}
+                        onChange={(e) => updateAssuranceItem(idx, 'title', e.target.value)}
+                        placeholder="Container Payload Data"
+                      />
+                    </div>
+
+                    {/* Subtitle */}
+                    <div className="sm:col-span-5">
+                      <label className="text-[11px] font-bold text-ink/70 mb-1 block">
+                        Subtitle / Specifications Details
+                      </label>
+                      <input
+                        className="field h-9 text-xs font-mono"
+                        value={item.subtitle || ''}
+                        onChange={(e) => updateAssuranceItem(idx, 'subtitle', e.target.value)}
+                        placeholder="20ft (18-22 MT) • 40ft HC (28 MT)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={addAssuranceItem}
+                  className="rounded-xl border border-dashed border-forest/40 bg-forest/5 hover:bg-forest/10 text-forest px-4 py-2 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>+ Add Specification Point</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer Row Settings */}
+            <div className="rounded-xl border border-line/70 bg-[#faf8f4] p-4 space-y-3">
+              <h5 className="text-xs font-bold text-ink uppercase tracking-wider">
+                Card Bottom Footer Tags
+              </h5>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="label">Footer Left Text</label>
+                  <input
+                    className="field font-mono text-xs"
+                    value={buyerAssurance.footerLeft || ''}
+                    onChange={(e) => updateBuyerAssurance('footerLeft', e.target.value)}
+                    placeholder="Direct Seaport Loading"
+                  />
+                </div>
+                <div>
+                  <label className="label">Footer Right Text (Highlighted)</label>
+                  <input
+                    className="field font-mono text-xs text-gold font-bold"
+                    value={buyerAssurance.footerRight || ''}
+                    onChange={(e) => updateBuyerAssurance('footerRight', e.target.value)}
+                    placeholder="Mundra & JNPT"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Reset button */}
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                onClick={resetBuyerAssurance}
+                className="text-xs font-semibold text-ink/60 hover:text-ink underline cursor-pointer transition"
+              >
+                ↺ Reset Buyer Assurance Card to Defaults
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-line bg-surface/30 p-6 text-center text-xs text-ink/50">
+            Buyer Assurance widget is currently hidden on the public Brochure page. Check the toggle above to enable and edit it.
+          </div>
+        )}
+      </div>
+
+      {/* 5. Live Full Hero Slider & Buyer Assurance Preview */}
       <div className="rounded-2xl border border-line bg-surface/50 p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-moss">
-              Live Preview
+              Full Hero Slider & Trust Card Live Preview
             </span>
             <span className="rounded-full bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-bold">
               Instant Sync
             </span>
           </div>
           <span className="text-[11px] font-mono text-ink/40">
-            Preview of /brochures hero
+            Preview of /brochures full hero
           </span>
         </div>
 
-        <div className="relative overflow-hidden rounded-xl border border-emerald-950/80 bg-[#0d1e17] p-6 text-paper shadow-inner">
-          <div className="pointer-events-none absolute -left-16 -top-16 h-36 w-36 rounded-full bg-forest/30 blur-2xl" />
-          <div className="pointer-events-none absolute -right-16 bottom-0 h-36 w-36 rounded-full bg-gold/15 blur-2xl" />
+        {/* Full-bleed hero banner container */}
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-950/80 bg-[#091610] text-paper shadow-2xl min-h-[360px] sm:min-h-[420px] flex items-center">
+          {/* Active slide media preview */}
+          {(() => {
+            const activeSlide = slides.length > 0 ? (slides[0] || {}) : {};
+            const mediaType = activeSlide.type || (current.video ? 'video' : 'image');
+            const videoUrl = activeSlide.video || current.video;
+            const imageUrl = activeSlide.image || current.image;
 
-          <div className="relative max-w-2xl">
-            <span className="eyebrow text-gold text-xs font-bold uppercase tracking-wider block">
-              {current.eyebrow || 'Official Catalogues & Line Cards'}
-            </span>
-            <h3 className="mt-2 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-white">
-              {current.title || 'Export Product Catalogues & Line Cards'}
-            </h3>
-            <p className="mt-2 text-xs sm:text-sm leading-relaxed text-paper/75">
-              {current.description ||
-                'Download detailed export specifications, packing formats, HS codes, and container payload capacities in verified PDF format.'}
-            </p>
+            return (
+              <>
+                {/* Background media */}
+                {mediaType === 'video' && videoUrl ? (
+                  <div className="absolute inset-0 w-full h-full bg-black overflow-hidden pointer-events-none">
+                    <video
+                      src={asset(videoUrl)}
+                      poster={imageUrl ? asset(imageUrl) : undefined}
+                      className="w-full h-full object-cover opacity-60"
+                      muted
+                      autoPlay
+                      loop
+                    />
+                  </div>
+                ) : imageUrl ? (
+                  <div className="absolute inset-0 w-full h-full bg-black overflow-hidden pointer-events-none">
+                    <img
+                      src={asset(imageUrl)}
+                      alt="Preview"
+                      className="w-full h-full object-cover opacity-60"
+                    />
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#12241b] via-[#0d1e17] to-[#1a382c] opacity-90" />
+                )}
 
-            {/* Live Badges */}
-            {showBadges && badges.length > 0 && (
-              <div className="mt-5 flex flex-wrap items-center gap-3 text-xs font-mono text-paper/70">
-                {badges.map((b, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 backdrop-blur border border-white/5"
-                  >
-                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${getDotClass(b.color)}`} />
-                    <span>{b.text || 'Untitled'}</span>
-                    {b.link && <span className="text-[10px] text-paper/50">↗</span>}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+                {/* Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#07130e]/95 via-[#07130e]/75 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#07130e] via-transparent to-black/40 pointer-events-none" />
+
+                {/* Foreground content grid */}
+                <div className="relative z-10 p-6 sm:p-8 w-full grid lg:grid-cols-12 gap-6 items-center">
+                  <div className={buyerAssurance.show !== false ? "lg:col-span-8" : "lg:col-span-12"}>
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-gold/20 border border-gold/40 px-3 py-0.5 font-mono text-[10px] font-bold text-gold">
+                        <span className="h-1.5 w-1.5 rounded-full bg-gold animate-ping" />
+                        {activeSlide.eyebrow || current.eyebrow || 'Official Catalogues & Line Cards'}
+                      </span>
+                      {(activeSlide.badge || 'Official Specs') && (
+                        <span className="rounded-full bg-white/10 px-2.5 py-0.5 font-mono text-[10px] text-white/90 border border-white/15">
+                          ★ {activeSlide.badge || 'Official Specs'}
+                        </span>
+                      )}
+                      <span className="rounded-full bg-black/60 px-2 py-0.5 font-mono text-[9px] font-bold text-paper/70 border border-white/10">
+                        {mediaType === 'video' ? '🎬 VIDEO' : '🖼️ PHOTO'}
+                      </span>
+                    </div>
+
+                    <h3 className="font-display text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                      {activeSlide.title || current.title || 'Export Product Catalogues & Line Cards'}
+                    </h3>
+
+                    {(activeSlide.subtitle) && (
+                      <p className="mt-1 text-gold font-mono text-xs font-semibold">
+                        {activeSlide.subtitle}
+                      </p>
+                    )}
+
+                    <p className="mt-3 text-xs sm:text-sm leading-relaxed text-paper/80 line-clamp-3">
+                      {activeSlide.description ||
+                        current.description ||
+                        'Download detailed export specifications, packing formats, HS codes, and container payload capacities in verified PDF format.'}
+                    </p>
+
+                    {/* Buttons mockup */}
+                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        className="btn-primary text-[11px] py-2 px-4 shadow-md font-bold pointer-events-none"
+                      >
+                        {activeSlide.primaryButtonText || 'Explore Product Segments ↓'}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-lg border border-white/20 bg-white/10 px-3.5 py-2 text-[11px] font-semibold text-white pointer-events-none"
+                      >
+                        {activeSlide.secondaryButtonText || 'Request Custom Line Card ✉️'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Live Buyer Assurance Preview Card */}
+                  {buyerAssurance.show !== false && (() => {
+                    const hasMedia =
+                      (buyerAssurance.mediaType === 'video' && buyerAssurance.video) ||
+                      (buyerAssurance.mediaType === 'image' && buyerAssurance.image) ||
+                      (!buyerAssurance.mediaType && (buyerAssurance.video || buyerAssurance.image));
+                    const isVideo =
+                      buyerAssurance.mediaType === 'video' || (!buyerAssurance.mediaType && buyerAssurance.video);
+
+                    return (
+                      <div className="lg:col-span-4">
+                        <div className="rounded-2xl border border-white/20 bg-black/60 backdrop-blur-xl p-4.5 text-paper shadow-2xl relative overflow-hidden">
+                          {/* Background Media if set to background */}
+                          {hasMedia && buyerAssurance.mediaDisplay === 'background' && (
+                            <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                              {isVideo ? (
+                                <video
+                                  src={asset(buyerAssurance.video)}
+                                  poster={buyerAssurance.image ? asset(buyerAssurance.image) : undefined}
+                                  autoPlay
+                                  loop
+                                  muted
+                                  playsInline
+                                  className="w-full h-full object-cover opacity-25"
+                                />
+                              ) : (
+                                <img
+                                  src={asset(buyerAssurance.image)}
+                                  alt="Card preview"
+                                  className="w-full h-full object-cover opacity-25"
+                                />
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/60" />
+                            </div>
+                          )}
+
+                          <div className="relative z-10">
+                            {/* Card Header */}
+                            <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
+                              <span className="font-mono text-[10px] font-bold text-gold uppercase tracking-wider flex items-center gap-1.5">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                {buyerAssurance.title || 'Buyer Assurance'}
+                              </span>
+                              <span className="font-mono text-[10px] text-paper/60">
+                                {buyerAssurance.badge || 'APEDA • ISO 22000'}
+                              </span>
+                            </div>
+
+                            {/* Mini Screen Media Player Window */}
+                            {hasMedia && buyerAssurance.mediaDisplay !== 'background' && (
+                              <div className="mt-2.5 relative rounded-xl overflow-hidden border border-white/20 bg-black/80 aspect-video max-h-32 flex items-center justify-center">
+                                {isVideo ? (
+                                  <video
+                                    src={asset(buyerAssurance.video)}
+                                    poster={buyerAssurance.image ? asset(buyerAssurance.image) : undefined}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <img
+                                    src={asset(buyerAssurance.image)}
+                                    alt="Small screen preview"
+                                    className="w-full h-full object-cover"
+                                  />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
+                                <div className="absolute top-1.5 left-2 z-10 flex items-center gap-1.5 rounded-full bg-black/70 px-2 py-0.5 border border-white/20">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                  <span className="font-mono text-[9px] font-bold text-white uppercase">
+                                    {buyerAssurance.mediaCaption || (isVideo ? 'LIVE VIDEO' : 'PHOTO SPEC')}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Specification Points */}
+                            <div className="mt-3 space-y-2 text-xs">
+                              {assuranceItems.map((item, itIdx) => (
+                                <div key={itIdx} className="flex items-center gap-2 text-paper/90">
+                                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-gold/15 text-gold text-xs shrink-0 border border-gold/20">
+                                    {item.icon || '✓'}
+                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-bold text-white leading-none text-xs truncate">
+                                      {item.title}
+                                    </p>
+                                    <p className="text-[10px] text-paper/60 font-mono mt-0.5 truncate">
+                                      {item.subtitle}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Card Footer */}
+                            {(buyerAssurance.footerLeft || buyerAssurance.footerRight) && (
+                              <div className="mt-3.5 pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-paper/60">
+                                <span>{buyerAssurance.footerLeft}</span>
+                                <span className="text-gold font-bold">{buyerAssurance.footerRight}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Bottom slide counter pill */}
+                <div className="absolute bottom-3 right-4 z-20 flex items-center gap-2 rounded-full bg-black/80 px-3 py-1 font-mono text-[10px] text-gold border border-white/15 backdrop-blur-md">
+                  <span>{slides.length > 0 ? `${slides.length} Slides Active` : '1 Default Slide'}</span>
+                  <span className="text-paper/40">•</span>
+                  <span>{current.autoPlay !== false ? `Autoplay (${current.autoPlayInterval || 5}s)` : 'Manual'}</span>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>
@@ -6284,44 +7321,318 @@ function PartnersPageEditor({ section, setSection }) {
   );
 }
 
+const DEFAULT_BLOG_CMS_BADGES = [
+  { text: 'Market Trade Intelligence', color: 'gold', link: '' },
+  { text: 'Verified Agro Harvest Trends', color: 'emerald', link: '' },
+  { text: 'Global Export Logistics', color: 'blue', link: '' },
+];
+
 function BlogHeroEditor({ section, setSection }) {
   const current = section || {};
   const update = (key, value) => {
     setSection({ ...current, [key]: value });
   };
 
+  const rawBadges = Array.isArray(current.badges) && current.badges.length > 0
+    ? current.badges
+    : DEFAULT_BLOG_CMS_BADGES;
+
+  const badges = rawBadges.map((b) =>
+    typeof b === 'string'
+      ? { text: b, color: 'gold', link: '' }
+      : { text: b?.text || '', color: b?.color || 'gold', link: b?.link || '' }
+  );
+
+  const showBadges = current.showBadges !== false;
+
+  const updateBadges = (newBadges) => {
+    update('badges', newBadges);
+  };
+
+  const updateBadgeItem = (index, field, value) => {
+    const copy = [...badges];
+    copy[index] = { ...copy[index], [field]: value };
+    updateBadges(copy);
+  };
+
+  const addBadge = () => {
+    updateBadges([...badges, { text: 'New Market Highlight', color: 'gold', link: '' }]);
+  };
+
+  const removeBadge = (index) => {
+    const copy = badges.filter((_, idx) => idx !== index);
+    updateBadges(copy);
+  };
+
+  const moveBadge = (index, direction) => {
+    const targetIdx = index + direction;
+    if (targetIdx < 0 || targetIdx >= badges.length) return;
+    const copy = [...badges];
+    const temp = copy[index];
+    copy[index] = copy[targetIdx];
+    copy[targetIdx] = temp;
+    updateBadges(copy);
+  };
+
+  const getDotClass = (col) => {
+    const found = BROCHURES_BADGE_COLORS.find((c) => c.id === col);
+    return found ? found.bgClass : (col?.startsWith('bg-') ? col : 'bg-gold');
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="label">Eyebrow Tag</label>
-          <input
-            className="field"
-            value={current.eyebrow || ''}
-            onChange={(e) => update('eyebrow', e.target.value)}
-            placeholder="Media & Articles"
-          />
+    <div className="space-y-6">
+      {/* 1. Header Typography */}
+      <div className="rounded-2xl border border-line bg-surface/30 p-5 space-y-4">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-moss">
+          Top Eyebrow, Title & Summary
+        </h4>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Eyebrow Tag</label>
+            <input
+              className="field"
+              value={current.eyebrow || ''}
+              onChange={(e) => update('eyebrow', e.target.value)}
+              placeholder="Media & Market Insights"
+            />
+          </div>
+          <div>
+            <label className="label">Hero Heading Title</label>
+            <input
+              className="field"
+              value={current.title || ''}
+              onChange={(e) => update('title', e.target.value)}
+              placeholder="Global Agro Export Blog & Market Insights"
+            />
+          </div>
         </div>
+
         <div>
-          <label className="label">Page Heading Title</label>
-          <input
+          <label className="label">Hero Description</label>
+          <textarea
             className="field"
-            value={current.title || ''}
-            onChange={(e) => update('title', e.target.value)}
-            placeholder="Blog"
+            rows="3"
+            value={current.description || ''}
+            onChange={(e) => update('description', e.target.value)}
+            placeholder="In-depth global market intelligence, harvest cycles, commodity price trends..."
           />
         </div>
       </div>
 
-      <div>
-        <label className="label">Hero Description</label>
-        <textarea
-          className="field"
-          rows="3"
-          value={current.description || ''}
-          onChange={(e) => update('description', e.target.value)}
-          placeholder="Latest insights, global commodity market updates, company announcements..."
-        />
+      {/* 2. Blog Hero Media (Image & Video) */}
+      <div className="rounded-2xl border border-line bg-white p-5 shadow-xs space-y-4">
+        <div className="border-b border-line pb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-base">🎬</span>
+            <h4 className="font-display text-base font-bold text-ink">
+              Blog Page Featured Media (Image & Video)
+            </h4>
+          </div>
+          <p className="mt-1 text-xs text-ink/65">
+            Add a feature image and/or promotional / documentary showcase video (MP4 / WebM) displayed on the Blog page header.
+          </p>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <ImageUpload
+            label="Blog Page Feature Image"
+            value={current.image || ''}
+            onChange={(url) => update('image', url)}
+          />
+
+          <VideoUpload
+            label="Blog Page Showcase Video (MP4 / WebM)"
+            value={current.video || ''}
+            onChange={(url) => update('video', url)}
+          />
+        </div>
+      </div>
+
+      {/* 3. Hero Badges & Trust Highlights */}
+      <div className="rounded-2xl border border-line bg-white p-5 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-base">🏷️</span>
+              <h4 className="font-display text-base font-bold text-ink">
+                Header Badges / Trade Highlights (Pills)
+              </h4>
+              <span className="rounded-full bg-forest/10 border border-forest/20 px-2 py-0.5 text-[11px] font-mono font-bold text-forest">
+                {badges.length} items
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-ink/65">
+              Customize the interactive pill badges shown below the description on the Blog header.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-xs font-semibold text-ink cursor-pointer bg-forest/5 px-3 py-1.5 rounded-lg border border-forest/20">
+              <input
+                type="checkbox"
+                checked={showBadges}
+                onChange={(e) => update('showBadges', e.target.checked)}
+              />
+              Show Badges on Page
+            </label>
+            <button
+              type="button"
+              onClick={addBadge}
+              className="btn-primary text-xs py-1.5 px-3 shadow-xs inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>+ Add Badge</span>
+            </button>
+          </div>
+        </div>
+
+        {showBadges && (
+          <div className="space-y-3">
+            {badges.map((b, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 rounded-xl border border-line bg-paper/50 p-3"
+              >
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-mono text-xs text-ink/40 w-5">#{idx + 1}</span>
+                  <select
+                    className="text-xs rounded-lg border border-line bg-white px-2 py-1.5 font-medium"
+                    value={b.color || 'gold'}
+                    onChange={(e) => updateBadgeItem(idx, 'color', e.target.value)}
+                  >
+                    {BROCHURES_BADGE_COLORS.map((col) => (
+                      <option key={col.id} value={col.id}>
+                        {col.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex-1 grid gap-2 sm:grid-cols-2">
+                  <input
+                    className="field text-xs py-1.5"
+                    placeholder="Badge Text"
+                    value={b.text || ''}
+                    onChange={(e) => updateBadgeItem(idx, 'text', e.target.value)}
+                  />
+                  <input
+                    className="field text-xs py-1.5 font-mono"
+                    placeholder="Optional Link (e.g. /products, #)"
+                    value={b.link || ''}
+                    onChange={(e) => updateBadgeItem(idx, 'link', e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => moveBadge(idx, -1)}
+                    disabled={idx === 0}
+                    className="h-7 w-7 rounded border border-line bg-white text-xs text-ink/70 disabled:opacity-30"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveBadge(idx, 1)}
+                    disabled={idx === badges.length - 1}
+                    className="h-7 w-7 rounded border border-line bg-white text-xs text-ink/70 disabled:opacity-30"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeBadge(idx)}
+                    className="h-7 px-2 rounded border border-red-200 bg-red-50 text-xs text-clay hover:bg-red-100"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 4. Live Preview with 16:9 Cinema Box */}
+      <div className="rounded-2xl border border-line bg-surface/40 p-5 space-y-3">
+        <div className="flex items-center justify-between border-b border-line pb-2">
+          <div className="flex items-center gap-2">
+            <span className="font-display text-xs font-bold uppercase tracking-wider text-ink">
+              Live Cinema Header Preview
+            </span>
+            <span className="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-mono text-emerald-800 font-bold">
+              Instant Sync
+            </span>
+          </div>
+          <span className="text-[11px] font-mono text-ink/40">
+            Preview of /blog hero
+          </span>
+        </div>
+
+        <div className="relative overflow-hidden rounded-xl border border-emerald-950/80 bg-[#0d1e17] p-6 text-paper shadow-inner">
+          <div className="pointer-events-none absolute -left-16 -top-16 h-36 w-36 rounded-full bg-forest/30 blur-2xl" />
+          <div className="pointer-events-none absolute -right-16 bottom-0 h-36 w-36 rounded-full bg-gold/15 blur-2xl" />
+
+          <div className="relative grid gap-6 md:grid-cols-12 items-center">
+            <div className="md:col-span-7">
+              <span className="eyebrow text-gold text-xs font-bold uppercase tracking-wider block">
+                {current.eyebrow || 'Media & Market Insights'}
+              </span>
+              <h3 className="mt-2 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-white">
+                {current.title || 'Global Agro Export Blog & Market Insights'}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm leading-relaxed text-paper/75">
+                {current.description ||
+                  'In-depth global market intelligence, harvest cycles, commodity price trends...'}
+              </p>
+
+              {/* Live Badges */}
+              {showBadges && badges.length > 0 && (
+                <div className="mt-5 flex flex-wrap items-center gap-2.5 text-xs font-mono text-paper/70">
+                  {badges.map((b, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 backdrop-blur border border-white/5 text-[11px]"
+                    >
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${getDotClass(b.color)}`} />
+                      <span>{b.text || 'Untitled'}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="md:col-span-5">
+              <div className="relative rounded-2xl bg-white/10 p-1.5 border border-white/20 shadow-lg">
+                <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden bg-black/80 flex items-center justify-center border border-gold/30">
+                  {current.video ? (
+                    <video
+                      src={asset(current.video)}
+                      poster={current.image ? asset(current.image) : undefined}
+                      className="h-full w-full object-cover"
+                      muted
+                    />
+                  ) : current.image ? (
+                    <img
+                      src={asset(current.image)}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center p-3 text-paper/50 font-mono text-[11px]">
+                      <span>No media set yet</span>
+                    </div>
+                  )}
+                  {(current.video || current.image) && (
+                    <span className="absolute top-2 right-2 rounded-full bg-black/70 px-2 py-0.5 font-mono text-[9px] font-bold text-gold border border-gold/30 backdrop-blur">
+                      {current.video ? '🎬 16:9 Video' : '🖼️ 16:9 Image'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -6333,8 +7644,25 @@ export default function ManageSiteContent() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [tab, setTab] = useState('home_hero');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'home_hero';
+  const [tab, setTabState] = useState(initialTab);
   const [sectionSearch, setSectionSearch] = useState('');
+
+  // Sync tab with URL search parameter
+  const setTab = (newTab) => {
+    setTabState(newTab);
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', newTab);
+    setSearchParams(next, { replace: true });
+  };
+
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== tab) {
+      setTabState(urlTab);
+    }
+  }, [searchParams]);
 
   // Keyboard shortcut Ctrl+S or Cmd+S to save
   useEffect(() => {
