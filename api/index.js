@@ -1,6 +1,5 @@
 import app from '../server/server.js';
 
-// Vercel serverless function entry point
-export default function handler(req, res) {
-  return app(req, res);
-}
+// Vercel entry point. Express receives the original /api/... path and handles
+// routing itself, so every API endpoint shares the same database middleware.
+export default app;

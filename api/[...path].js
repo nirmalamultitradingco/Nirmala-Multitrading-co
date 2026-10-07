@@ -1,6 +1,4 @@
 import app from '../server/server.js';
 
 // Catch-all Vercel function for /api/* routes.
-export default function handler(req, res) {
-  return app(req, res);
-}
+export default app;
