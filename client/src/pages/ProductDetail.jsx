@@ -128,11 +128,6 @@ export default function ProductDetail() {
                 alt={product.name}
                 className="aspect-[4/3] w-full object-cover object-center transition-transform duration-500 hover:scale-105"
                 onError={(e) => {
-                  if (e.target.dataset.triedApi !== 'true' && e.target.src.includes('/uploads/')) {
-                    e.target.dataset.triedApi = 'true';
-                    e.target.src = e.target.src.replace('/uploads/', '/api/uploads/');
-                    return;
-                  }
                   e.target.onerror = null;
                   e.target.src = '/NMC logo.png';
                   e.target.className = 'aspect-[4/3] w-full object-contain p-6';

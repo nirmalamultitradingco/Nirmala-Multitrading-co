@@ -54,14 +54,9 @@ export const asset = (src) => {
 
   let cleanSrc = src.startsWith('/') ? src : `/${src}`;
 
-  // Normalize legacy and local paths:
-  // /uploads/... -> /api/uploads/...
-  // /media/...   -> /api/media/...
-  // This ensures Nginx reverse proxies on AWS (which forward /api/* to Express)
-  // reliably deliver the request to Node.js / MongoDB Atlas.
+  // Normalize '/uploads/' paths to '/api/uploads/' so Nginx reverse proxies
+  // (which forward /api to Express) will reliably stream images from MongoDB/disk
   if (cleanSrc.startsWith('/uploads/')) {
-    cleanSrc = `/api${cleanSrc}`;
-  } else if (cleanSrc.startsWith('/media/')) {
     cleanSrc = `/api${cleanSrc}`;
   }
 

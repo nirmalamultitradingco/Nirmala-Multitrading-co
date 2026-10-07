@@ -66,72 +66,30 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-/* Uploaded files - support local directory and MongoDB Atlas Media streaming on /uploads, /api/uploads, /media, and /api/media */
+/* Uploaded files - support local directory and MongoDB Atlas Media streaming on both /uploads and /api/uploads */
 const uploadsDir = path.join(__dirname, 'uploads');
 app.use('/uploads', express.static(uploadsDir));
 app.use('/api/uploads', express.static(uploadsDir));
-app.use('/media', express.static(uploadsDir));
-app.use('/api/media', express.static(uploadsDir));
-
-const MIME_MAP = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.webp': 'image/webp',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.pdf': 'application/pdf',
-  '.mp4': 'video/mp4',
-  '.webm': 'video/webm',
-  '.mov': 'video/quicktime',
-  '.m4v': 'video/x-m4v',
-  '.mkv': 'video/x-matroska',
-};
 
 const serveUploadedMedia = async (req, res, next) => {
   try {
-    const rawParam = req.params.filename || req.params[0] || path.basename(req.path);
-    if (!rawParam) {
-      return res.status(404).json({ message: 'File not found' });
-    }
-
-    const decoded = decodeURIComponent(rawParam);
-    const cleanFilename = path.basename(decoded);
-    const ext = path.extname(cleanFilename).toLowerCase();
+    const filename = req.params.filename;
 
     // Enable cross-origin resource sharing so browser canvas and admin previews can load media
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.set('X-Content-Type-Options', 'nosniff');
 
-    // 1. Check local disk first (if present and valid)
-    const localPath = path.join(uploadsDir, cleanFilename);
+    // 1. Check local disk first (if present)
+    const localPath = path.join(uploadsDir, filename);
     if (fs.existsSync(localPath)) {
-      try {
-        const stats = fs.statSync(localPath);
-        if (stats.size > 0) {
-          return res.sendFile(localPath);
-        }
-      } catch (_) {}
+      return res.sendFile(localPath);
     }
 
     // 2. Fetch directly from MongoDB Atlas Media collection
     await connectDB();
-    const media = await Media.findOne({
-      $or: [
-        { filename: cleanFilename },
-        { filename: rawParam },
-        { filename: `/uploads/${cleanFilename}` },
-        { filename: `uploads/${cleanFilename}` },
-        { filename: `/media/${cleanFilename}` },
-        { filename: `media/${cleanFilename}` },
-        { originalName: cleanFilename },
-      ],
-    });
-
+    const media = await Media.findOne({ filename });
     if (media && media.data) {
-      // Best-effort cache to local disk folder for fast subsequent serving (if writable)
+      // Cache to local disk folder for fast subsequent serving
       try {
         if (!fs.existsSync(uploadsDir)) {
           fs.mkdirSync(uploadsDir, { recursive: true });
@@ -139,15 +97,8 @@ const serveUploadedMedia = async (req, res, next) => {
         fs.writeFileSync(localPath, media.data);
       } catch (_) {}
 
-      let contentType = media.contentType;
-      if (!contentType || contentType === 'application/octet-stream') {
-        contentType = MIME_MAP[ext] || 'application/octet-stream';
-      }
-
-      res.set('Content-Type', contentType);
-      res.set('Content-Length', media.size || media.data.length);
+      res.set('Content-Type', media.contentType || 'application/octet-stream');
       res.set('Cache-Control', 'public, max-age=31536000, immutable');
-      res.set('Accept-Ranges', 'bytes');
       return res.send(media.data);
     }
 
@@ -157,21 +108,8 @@ const serveUploadedMedia = async (req, res, next) => {
   }
 };
 
-const mediaRoutes = [
-  '/uploads/:filename',
-  '/api/uploads/:filename',
-  '/media/:filename',
-  '/api/media/:filename',
-  '/uploads/*',
-  '/api/uploads/*',
-  '/media/*',
-  '/api/media/*',
-];
-
-mediaRoutes.forEach((route) => {
-  app.get(route, serveUploadedMedia);
-  app.head(route, serveUploadedMedia);
-});
+app.get('/uploads/:filename', serveUploadedMedia);
+app.get('/api/uploads/:filename', serveUploadedMedia);
 
 
 /* Root & Health checks (available without requiring database connection) */
@@ -264,14 +202,14 @@ app.use(notFound);
 app.use(errorHandler);
 
 /*
- * Server listener (starts HTTP server when running on AWS/PM2 or locally; skipped in Vercel serverless)
+ * Server listener (only starts HTTP server when run standalone, e.g. node server.js)
  */
 const PORT = process.env.PORT || 5000;
 const isDirectRun =
   process.argv[1] &&
   (process.argv[1].endsWith('server.js') || process.argv[1].endsWith('server'));
 
-if (!process.env.VERCEL && (isDirectRun || process.env.NODE_ENV !== 'test')) {
+if (isDirectRun && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`API running on http://localhost:${PORT}`);
   });
